@@ -1,0 +1,123 @@
+sample	bacterial_archaeal_bases	metagenome_size	read_fraction	average_bacterial_archaeal_genome_size	warning	domain_relative_abundance	phylum_relative_abundance	class_relative_abundance	order_relative_abundance	family_relative_abundance	genus_relative_abundance	species_relative_abundance
+B109_23_EFNP_N1_M_1	5555265979	5894314608	94.25	2504177		0.52	0.41	0.69	1.50	12.26	82.63	1.98
+B111F_22_EFNP_N1_M_1	3354309772	5529849659	60.66	2556833		1.38	0.49	1.14	2.31	15.08	75.87	3.73
+B11_23_RUNR_M_1	2717817015	10752326061	25.28	2532253		1.39	0.51	1.46	2.29	16.65	74.62	3.07
+B120_23_EFNP_TC_M_1	5447994488	5235352832	100.00	2844802		0.41	0.28	0.62	1.18	11.67	78.89	6.95
+B163F_22_EFNP_N1_M_1	8571902617	9508931629	90.15	2505445		0.42	0.47	1.12	1.47	12.58	78.23	5.69
+B184F_22_EFNP_BB_M_1	7662591464	7310895477	100.00	2685566		0.42	0.36	1.15	1.47	12.27	78.98	5.35
+B18F_22_EFNP_N1_M_1	7118394548	7656445728	92.97	2687962		0.43	0.38	0.95	1.16	12.97	78.18	5.93
+B19_1_23_RUNR_M_1	7193594438	11809270011	60.91	2753655		0.50	0.39	1.00	1.14	13.16	78.29	5.51
+B19_2_23_RUNR_M_1	352698423	3302701120	10.68	2549504		5.43	1.19	3.53	5.08	24.87	54.99	4.89
+B201_23_EFNP_BB_M_1	15274221658	16252540762	93.98	2816340		0.36	0.27	0.75	0.75	8.37	84.58	4.93
+B2_1_23_RUNR_M_1	2812386901	5336623580	52.70	2616685		1.13	0.55	1.21	1.64	11.46	80.91	3.10
+B218_23_EFNP_N96_M_1	17449754842	18636422136	93.63	2920095		0.30	0.21	0.48	0.81	8.51	83.57	6.13
+B220_23_EFNP_FF_M_1	2565764787	3068957480	83.60	2833659		1.57	0.60	1.34	1.84	15.80	74.76	4.09
+B246F_22_EFNP_N1_M_1	7284125828	8056304641	90.42	2709888		0.47	0.53	0.83	1.40	13.02	78.05	5.70
+B250F_22_EFNP_CV_M_1	36327320650	39387732877	92.23	2721274		0.18	0.30	0.40	0.35	10.31	80.92	7.53
+B29F_22_EFNP_BB_M_1	4726036381	5622957342	84.05	2637695		0.80	0.48	1.16	1.57	14.79	76.64	4.57
+B31_23_EFNP_N31_M_1	5910188410	6065021523	97.45	2608491		0.82	0.41	0.56	1.08	12.11	78.52	6.51
+B328_23_EFNP_CC_M_1	4299519530	4519761525	95.13	2795290		1.10	0.60	1.17	1.70	14.28	75.24	5.91
+B33_23_RUNR_M_1	4480577140	5534840696	80.95	2614441		0.55	0.57	1.08	2.26	15.19	75.50	4.85
+B357_23_EFNP_TE_M_1	2378660424	2581450182	92.14	2638851		1.31	0.75	1.12	2.14	18.63	72.25	3.81
+B361_23_EFNP_N88_M_1	5207403136	5214420900	99.87	2789750		0.70	0.56	0.89	1.51	14.06	76.66	5.64
+B362F_22_EFNP_WH_M_1	5967383753	6390021805	93.39	2635654		0.65	0.37	1.12	1.50	13.26	78.36	4.73
+B363_23_EFNP_WH_M_1	5691556439	5715477603	99.58	2934125		0.84	0.30	1.06	1.67	14.02	75.64	6.47
+B369F_22_EFNP_CV_M_1	7641797448	9136414892	83.64	2756254		1.01	0.50	0.76	1.50	13.22	76.61	6.39
+B382_23_EFNP_CC_M_1	4888196015	5262596107	92.89	2788491		1.02	0.39	0.86	1.70	12.87	76.64	6.54
+B39_23_RUNR_M_1	7015259239	7401945106	94.78	2556926		0.94	0.44	1.25	1.08	12.04	79.81	4.44
+B407_23_EFNP_DW_M_1	2465964534	2618066193	94.19	2802041		1.42	0.71	1.55	2.23	16.87	74.01	3.21
+B441_23_EFNP_RE_M_1	5618983048	5610176636	100.00	2607550		0.91	0.50	0.89	1.39	14.04	75.55	6.71
+B458_23_EFNP_N1_M_1	5096622248	5286556103	96.41	2863014		0.82	0.56	0.98	1.68	14.24	76.71	5.01
+B461F_22_EFNP_BB_M_1	5577407434	6499619600	85.81	2650229		1.20	0.46	0.74	1.53	13.92	78.32	3.83
+B462_23_EFNP_CV_M_1	4963891615	4758315796	100.00	2641028		0.68	0.56	0.79	1.66	12.95	79.17	4.19
+B466F_22_EFNP_N1_M_1	6062290645	6771027081	89.53	2442374		0.32	0.41	1.34	1.25	16.74	75.16	4.78
+B478_23_EFNP_NB_M_1	195184458	2847049257	6.86	2751790		10.48	2.64	7.30	9.77	25.31	44.51	0.00
+B523F_22_EFNP_DW_M_1	7839895316	9179887885	85.40	2669055		0.67	0.35	0.73	1.07	11.98	80.04	5.15
+B534F_22_EFNP_CC_M_1	4189121223	4582445605	91.42	2531099		0.97	0.48	0.94	1.89	15.82	76.26	3.64
+B6_23_RUNR_M_1	6800787222	7867748947	86.44	2727898		0.83	0.35	0.81	1.15	9.59	82.36	4.91
+B63_23_RUNR_M_1	2103348538	2373034938	88.64	2607349		1.91	0.65	1.44	2.45	18.29	73.35	1.91
+B83F_22_EFNP_WH_M_1	8303019169	10669661475	77.82	2668545		0.45	0.33	0.86	1.39	12.12	80.39	4.47
+FS1_1_23_RUNR_M_1	1321162779	5499081068	24.03	2793806		2.72	0.59	1.73	3.11	21.24	68.88	1.74
+FS11F_22_EFNP_N1_M_1	4731559747	5426208650	87.20	2810149		1.51	0.64	1.40	1.27	13.59	75.59	6.00
+No_69_road_23_EFNP_N69_M_1	6000808657	6715065750	89.36	2797097		1.06	0.40	1.22	1.14	12.96	74.33	8.90
+B109_23_EFNP_N1_M_1	5555265979	5894314608	94.25	2504177		0.52	0.41	0.69	1.50	12.26	82.63	1.98
+sample	bacterial_archaeal_bases	metagenome_size	read_fraction	average_bacterial_archaeal_genome_size	warning	domain_relative_abundance	phylum_relative_abundance	class_relative_abundance	order_relative_abundance	family_relative_abundance	genus_relative_abundance	species_relative_abundance
+B111F_22_EFNP_N1_M_1	3354309772	5529849659	60.66	2556833		1.38	0.49	1.14	2.31	15.08	75.87	3.73
+sample	bacterial_archaeal_bases	metagenome_size	read_fraction	average_bacterial_archaeal_genome_size	warning	domain_relative_abundance	phylum_relative_abundance	class_relative_abundance	order_relative_abundance	family_relative_abundance	genus_relative_abundance	species_relative_abundance
+B11_23_RUNR_M_1	2717817015	10752326061	25.28	2532253		1.39	0.51	1.46	2.29	16.65	74.62	3.07
+sample	bacterial_archaeal_bases	metagenome_size	read_fraction	average_bacterial_archaeal_genome_size	warning	domain_relative_abundance	phylum_relative_abundance	class_relative_abundance	order_relative_abundance	family_relative_abundance	genus_relative_abundance	species_relative_abundance
+B120_23_EFNP_TC_M_1	5447994488	5235352832	100.00	2844802		0.41	0.28	0.62	1.18	11.67	78.89	6.95
+sample	bacterial_archaeal_bases	metagenome_size	read_fraction	average_bacterial_archaeal_genome_size	warning	domain_relative_abundance	phylum_relative_abundance	class_relative_abundance	order_relative_abundance	family_relative_abundance	genus_relative_abundance	species_relative_abundance
+B163F_22_EFNP_N1_M_1	8571902617	9508931629	90.15	2505445		0.42	0.47	1.12	1.47	12.58	78.23	5.69
+sample	bacterial_archaeal_bases	metagenome_size	read_fraction	average_bacterial_archaeal_genome_size	warning	domain_relative_abundance	phylum_relative_abundance	class_relative_abundance	order_relative_abundance	family_relative_abundance	genus_relative_abundance	species_relative_abundance
+B184F_22_EFNP_BB_M_1	7662591464	7310895477	100.00	2685566		0.42	0.36	1.15	1.47	12.27	78.98	5.35
+sample	bacterial_archaeal_bases	metagenome_size	read_fraction	average_bacterial_archaeal_genome_size	warning	domain_relative_abundance	phylum_relative_abundance	class_relative_abundance	order_relative_abundance	family_relative_abundance	genus_relative_abundance	species_relative_abundance
+B18F_22_EFNP_N1_M_1	7118394548	7656445728	92.97	2687962		0.43	0.38	0.95	1.16	12.97	78.18	5.93
+sample	bacterial_archaeal_bases	metagenome_size	read_fraction	average_bacterial_archaeal_genome_size	warning	domain_relative_abundance	phylum_relative_abundance	class_relative_abundance	order_relative_abundance	family_relative_abundance	genus_relative_abundance	species_relative_abundance
+B19_1_23_RUNR_M_1	7193594438	11809270011	60.91	2753655		0.50	0.39	1.00	1.14	13.16	78.29	5.51
+sample	bacterial_archaeal_bases	metagenome_size	read_fraction	average_bacterial_archaeal_genome_size	warning	domain_relative_abundance	phylum_relative_abundance	class_relative_abundance	order_relative_abundance	family_relative_abundance	genus_relative_abundance	species_relative_abundance
+B19_2_23_RUNR_M_1	352698423	3302701120	10.68	2549504		5.43	1.19	3.53	5.08	24.87	54.99	4.89
+sample	bacterial_archaeal_bases	metagenome_size	read_fraction	average_bacterial_archaeal_genome_size	warning	domain_relative_abundance	phylum_relative_abundance	class_relative_abundance	order_relative_abundance	family_relative_abundance	genus_relative_abundance	species_relative_abundance
+B201_23_EFNP_BB_M_1	15274221658	16252540762	93.98	2816340		0.36	0.27	0.75	0.75	8.37	84.58	4.93
+sample	bacterial_archaeal_bases	metagenome_size	read_fraction	average_bacterial_archaeal_genome_size	warning	domain_relative_abundance	phylum_relative_abundance	class_relative_abundance	order_relative_abundance	family_relative_abundance	genus_relative_abundance	species_relative_abundance
+B2_1_23_RUNR_M_1	2812386901	5336623580	52.70	2616685		1.13	0.55	1.21	1.64	11.46	80.91	3.10
+sample	bacterial_archaeal_bases	metagenome_size	read_fraction	average_bacterial_archaeal_genome_size	warning	domain_relative_abundance	phylum_relative_abundance	class_relative_abundance	order_relative_abundance	family_relative_abundance	genus_relative_abundance	species_relative_abundance
+B218_23_EFNP_N96_M_1	17449754842	18636422136	93.63	2920095		0.30	0.21	0.48	0.81	8.51	83.57	6.13
+sample	bacterial_archaeal_bases	metagenome_size	read_fraction	average_bacterial_archaeal_genome_size	warning	domain_relative_abundance	phylum_relative_abundance	class_relative_abundance	order_relative_abundance	family_relative_abundance	genus_relative_abundance	species_relative_abundance
+B220_23_EFNP_FF_M_1	2565764787	3068957480	83.60	2833659		1.57	0.60	1.34	1.84	15.80	74.76	4.09
+sample	bacterial_archaeal_bases	metagenome_size	read_fraction	average_bacterial_archaeal_genome_size	warning	domain_relative_abundance	phylum_relative_abundance	class_relative_abundance	order_relative_abundance	family_relative_abundance	genus_relative_abundance	species_relative_abundance
+B246F_22_EFNP_N1_M_1	7284125828	8056304641	90.42	2709888		0.47	0.53	0.83	1.40	13.02	78.05	5.70
+sample	bacterial_archaeal_bases	metagenome_size	read_fraction	average_bacterial_archaeal_genome_size	warning	domain_relative_abundance	phylum_relative_abundance	class_relative_abundance	order_relative_abundance	family_relative_abundance	genus_relative_abundance	species_relative_abundance
+B250F_22_EFNP_CV_M_1	36327320650	39387732877	92.23	2721274		0.18	0.30	0.40	0.35	10.31	80.92	7.53
+sample	bacterial_archaeal_bases	metagenome_size	read_fraction	average_bacterial_archaeal_genome_size	warning	domain_relative_abundance	phylum_relative_abundance	class_relative_abundance	order_relative_abundance	family_relative_abundance	genus_relative_abundance	species_relative_abundance
+B29F_22_EFNP_BB_M_1	4726036381	5622957342	84.05	2637695		0.80	0.48	1.16	1.57	14.79	76.64	4.57
+sample	bacterial_archaeal_bases	metagenome_size	read_fraction	average_bacterial_archaeal_genome_size	warning	domain_relative_abundance	phylum_relative_abundance	class_relative_abundance	order_relative_abundance	family_relative_abundance	genus_relative_abundance	species_relative_abundance
+B31_23_EFNP_N31_M_1	5910188410	6065021523	97.45	2608491		0.82	0.41	0.56	1.08	12.11	78.52	6.51
+sample	bacterial_archaeal_bases	metagenome_size	read_fraction	average_bacterial_archaeal_genome_size	warning	domain_relative_abundance	phylum_relative_abundance	class_relative_abundance	order_relative_abundance	family_relative_abundance	genus_relative_abundance	species_relative_abundance
+B328_23_EFNP_CC_M_1	4299519530	4519761525	95.13	2795290		1.10	0.60	1.17	1.70	14.28	75.24	5.91
+sample	bacterial_archaeal_bases	metagenome_size	read_fraction	average_bacterial_archaeal_genome_size	warning	domain_relative_abundance	phylum_relative_abundance	class_relative_abundance	order_relative_abundance	family_relative_abundance	genus_relative_abundance	species_relative_abundance
+B33_23_RUNR_M_1	4480577140	5534840696	80.95	2614441		0.55	0.57	1.08	2.26	15.19	75.50	4.85
+sample	bacterial_archaeal_bases	metagenome_size	read_fraction	average_bacterial_archaeal_genome_size	warning	domain_relative_abundance	phylum_relative_abundance	class_relative_abundance	order_relative_abundance	family_relative_abundance	genus_relative_abundance	species_relative_abundance
+B357_23_EFNP_TE_M_1	2378660424	2581450182	92.14	2638851		1.31	0.75	1.12	2.14	18.63	72.25	3.81
+sample	bacterial_archaeal_bases	metagenome_size	read_fraction	average_bacterial_archaeal_genome_size	warning	domain_relative_abundance	phylum_relative_abundance	class_relative_abundance	order_relative_abundance	family_relative_abundance	genus_relative_abundance	species_relative_abundance
+B361_23_EFNP_N88_M_1	5207403136	5214420900	99.87	2789750		0.70	0.56	0.89	1.51	14.06	76.66	5.64
+sample	bacterial_archaeal_bases	metagenome_size	read_fraction	average_bacterial_archaeal_genome_size	warning	domain_relative_abundance	phylum_relative_abundance	class_relative_abundance	order_relative_abundance	family_relative_abundance	genus_relative_abundance	species_relative_abundance
+B362F_22_EFNP_WH_M_1	5967383753	6390021805	93.39	2635654		0.65	0.37	1.12	1.50	13.26	78.36	4.73
+sample	bacterial_archaeal_bases	metagenome_size	read_fraction	average_bacterial_archaeal_genome_size	warning	domain_relative_abundance	phylum_relative_abundance	class_relative_abundance	order_relative_abundance	family_relative_abundance	genus_relative_abundance	species_relative_abundance
+B363_23_EFNP_WH_M_1	5691556439	5715477603	99.58	2934125		0.84	0.30	1.06	1.67	14.02	75.64	6.47
+sample	bacterial_archaeal_bases	metagenome_size	read_fraction	average_bacterial_archaeal_genome_size	warning	domain_relative_abundance	phylum_relative_abundance	class_relative_abundance	order_relative_abundance	family_relative_abundance	genus_relative_abundance	species_relative_abundance
+B369F_22_EFNP_CV_M_1	7641797448	9136414892	83.64	2756254		1.01	0.50	0.76	1.50	13.22	76.61	6.39
+sample	bacterial_archaeal_bases	metagenome_size	read_fraction	average_bacterial_archaeal_genome_size	warning	domain_relative_abundance	phylum_relative_abundance	class_relative_abundance	order_relative_abundance	family_relative_abundance	genus_relative_abundance	species_relative_abundance
+B382_23_EFNP_CC_M_1	4888196015	5262596107	92.89	2788491		1.02	0.39	0.86	1.70	12.87	76.64	6.54
+sample	bacterial_archaeal_bases	metagenome_size	read_fraction	average_bacterial_archaeal_genome_size	warning	domain_relative_abundance	phylum_relative_abundance	class_relative_abundance	order_relative_abundance	family_relative_abundance	genus_relative_abundance	species_relative_abundance
+B39_23_RUNR_M_1	7015259239	7401945106	94.78	2556926		0.94	0.44	1.25	1.08	12.04	79.81	4.44
+sample	bacterial_archaeal_bases	metagenome_size	read_fraction	average_bacterial_archaeal_genome_size	warning	domain_relative_abundance	phylum_relative_abundance	class_relative_abundance	order_relative_abundance	family_relative_abundance	genus_relative_abundance	species_relative_abundance
+B407_23_EFNP_DW_M_1	2465964534	2618066193	94.19	2802041		1.42	0.71	1.55	2.23	16.87	74.01	3.21
+sample	bacterial_archaeal_bases	metagenome_size	read_fraction	average_bacterial_archaeal_genome_size	warning	domain_relative_abundance	phylum_relative_abundance	class_relative_abundance	order_relative_abundance	family_relative_abundance	genus_relative_abundance	species_relative_abundance
+B441_23_EFNP_RE_M_1	5618983048	5610176636	100.00	2607550		0.91	0.50	0.89	1.39	14.04	75.55	6.71
+sample	bacterial_archaeal_bases	metagenome_size	read_fraction	average_bacterial_archaeal_genome_size	warning	domain_relative_abundance	phylum_relative_abundance	class_relative_abundance	order_relative_abundance	family_relative_abundance	genus_relative_abundance	species_relative_abundance
+B458_23_EFNP_N1_M_1	5096622248	5286556103	96.41	2863014		0.82	0.56	0.98	1.68	14.24	76.71	5.01
+sample	bacterial_archaeal_bases	metagenome_size	read_fraction	average_bacterial_archaeal_genome_size	warning	domain_relative_abundance	phylum_relative_abundance	class_relative_abundance	order_relative_abundance	family_relative_abundance	genus_relative_abundance	species_relative_abundance
+B461F_22_EFNP_BB_M_1	5577407434	6499619600	85.81	2650229		1.20	0.46	0.74	1.53	13.92	78.32	3.83
+sample	bacterial_archaeal_bases	metagenome_size	read_fraction	average_bacterial_archaeal_genome_size	warning	domain_relative_abundance	phylum_relative_abundance	class_relative_abundance	order_relative_abundance	family_relative_abundance	genus_relative_abundance	species_relative_abundance
+B462_23_EFNP_CV_M_1	4963891615	4758315796	100.00	2641028		0.68	0.56	0.79	1.66	12.95	79.17	4.19
+sample	bacterial_archaeal_bases	metagenome_size	read_fraction	average_bacterial_archaeal_genome_size	warning	domain_relative_abundance	phylum_relative_abundance	class_relative_abundance	order_relative_abundance	family_relative_abundance	genus_relative_abundance	species_relative_abundance
+B466F_22_EFNP_N1_M_1	6062290645	6771027081	89.53	2442374		0.32	0.41	1.34	1.25	16.74	75.16	4.78
+sample	bacterial_archaeal_bases	metagenome_size	read_fraction	average_bacterial_archaeal_genome_size	warning	domain_relative_abundance	phylum_relative_abundance	class_relative_abundance	order_relative_abundance	family_relative_abundance	genus_relative_abundance	species_relative_abundance
+B478_23_EFNP_NB_M_1	195184458	2847049257	6.86	2751790		10.48	2.64	7.30	9.77	25.31	44.51	0.00
+sample	bacterial_archaeal_bases	metagenome_size	read_fraction	average_bacterial_archaeal_genome_size	warning	domain_relative_abundance	phylum_relative_abundance	class_relative_abundance	order_relative_abundance	family_relative_abundance	genus_relative_abundance	species_relative_abundance
+B523F_22_EFNP_DW_M_1	7839895316	9179887885	85.40	2669055		0.67	0.35	0.73	1.07	11.98	80.04	5.15
+sample	bacterial_archaeal_bases	metagenome_size	read_fraction	average_bacterial_archaeal_genome_size	warning	domain_relative_abundance	phylum_relative_abundance	class_relative_abundance	order_relative_abundance	family_relative_abundance	genus_relative_abundance	species_relative_abundance
+B534F_22_EFNP_CC_M_1	4189121223	4582445605	91.42	2531099		0.97	0.48	0.94	1.89	15.82	76.26	3.64
+sample	bacterial_archaeal_bases	metagenome_size	read_fraction	average_bacterial_archaeal_genome_size	warning	domain_relative_abundance	phylum_relative_abundance	class_relative_abundance	order_relative_abundance	family_relative_abundance	genus_relative_abundance	species_relative_abundance
+B6_23_RUNR_M_1	6800787222	7867748947	86.44	2727898		0.83	0.35	0.81	1.15	9.59	82.36	4.91
+sample	bacterial_archaeal_bases	metagenome_size	read_fraction	average_bacterial_archaeal_genome_size	warning	domain_relative_abundance	phylum_relative_abundance	class_relative_abundance	order_relative_abundance	family_relative_abundance	genus_relative_abundance	species_relative_abundance
+B63_23_RUNR_M_1	2103348538	2373034938	88.64	2607349		1.91	0.65	1.44	2.45	18.29	73.35	1.91
+sample	bacterial_archaeal_bases	metagenome_size	read_fraction	average_bacterial_archaeal_genome_size	warning	domain_relative_abundance	phylum_relative_abundance	class_relative_abundance	order_relative_abundance	family_relative_abundance	genus_relative_abundance	species_relative_abundance
+B83F_22_EFNP_WH_M_1	8303019169	10669661475	77.82	2668545		0.45	0.33	0.86	1.39	12.12	80.39	4.47
+sample	bacterial_archaeal_bases	metagenome_size	read_fraction	average_bacterial_archaeal_genome_size	warning	domain_relative_abundance	phylum_relative_abundance	class_relative_abundance	order_relative_abundance	family_relative_abundance	genus_relative_abundance	species_relative_abundance
+FS1_1_23_RUNR_M_1	1321162779	5499081068	24.03	2793806		2.72	0.59	1.73	3.11	21.24	68.88	1.74
+sample	bacterial_archaeal_bases	metagenome_size	read_fraction	average_bacterial_archaeal_genome_size	warning	domain_relative_abundance	phylum_relative_abundance	class_relative_abundance	order_relative_abundance	family_relative_abundance	genus_relative_abundance	species_relative_abundance
+FS11F_22_EFNP_N1_M_1	4731559747	5426208650	87.20	2810149		1.51	0.64	1.40	1.27	13.59	75.59	6.00
+sample	bacterial_archaeal_bases	metagenome_size	read_fraction	average_bacterial_archaeal_genome_size	warning	domain_relative_abundance	phylum_relative_abundance	class_relative_abundance	order_relative_abundance	family_relative_abundance	genus_relative_abundance	species_relative_abundance
+No_69_road_23_EFNP_N69_M_1	6000808657	6715065750	89.36	2797097		1.06	0.40	1.22	1.14	12.96	74.33	8.90

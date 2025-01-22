@@ -1,0 +1,61 @@
+/projects/mjolnir1/people/ncl550/0_software/78e2fb48b8f3627bf9c6bb4230b0602f/bin/quast -o 3_Outputs/2_Coassemblies/nhnw_QUAST --threads 8 3_Outputs/2_Coassemblies/nhnw/nhnw_contigs.fasta
+
+Version: 5.2.0
+
+System information:
+  OS: Linux-4.18.0-553.16.1.el8_10.x86_64-x86_64-with-glibc2.28 (linux_64)
+  Python version: 3.9.0
+  CPUs number: 96
+
+Started: 2024-12-28 05:17:08
+
+Logging to /maps/projects/mjolnir1/people/ncl550/1_projects/2025_wombats/3_Outputs/2_Coassemblies/nhnw_QUAST/quast.log
+
+CWD: /maps/projects/mjolnir1/people/ncl550/1_projects/2025_wombats
+Main parameters: 
+  MODE: default, threads: 8, min contig length: 500, min alignment length: 65, min alignment IDY: 95.0, \
+  ambiguity: one, min local misassembly length: 200, min extensive misassembly length: 1000
+
+Contigs:
+  Pre-processing...
+  3_Outputs/2_Coassemblies/nhnw/nhnw_contigs.fasta ==> nhnw_contigs
+
+2024-12-28 05:17:54
+Running Basic statistics processor...
+  Contig files: 
+    nhnw_contigs
+  Calculating N50 and L50...
+    nhnw_contigs, N50 = 22118, L50 = 16730, auN = 49743.1, Total length = 1829462759, GC % = 44.36, # N's per 100 kbp =  0.00
+  Drawing Nx plot...
+    saved to /maps/projects/mjolnir1/people/ncl550/1_projects/2025_wombats/3_Outputs/2_Coassemblies/nhnw_QUAST/basic_stats/Nx_plot.pdf
+  Drawing cumulative plot...
+    saved to /maps/projects/mjolnir1/people/ncl550/1_projects/2025_wombats/3_Outputs/2_Coassemblies/nhnw_QUAST/basic_stats/cumulative_plot.pdf
+  Drawing GC content plot...
+    saved to /maps/projects/mjolnir1/people/ncl550/1_projects/2025_wombats/3_Outputs/2_Coassemblies/nhnw_QUAST/basic_stats/GC_content_plot.pdf
+  Drawing nhnw_contigs GC content plot...
+    saved to /maps/projects/mjolnir1/people/ncl550/1_projects/2025_wombats/3_Outputs/2_Coassemblies/nhnw_QUAST/basic_stats/nhnw_contigs_GC_content_plot.pdf
+Done.
+
+NOTICE: Genes are not predicted by default. Use --gene-finding or --glimmer option to enable it.
+
+2024-12-28 05:18:40
+Creating large visual summaries...
+This may take a while: press Ctrl-C to skip this step..
+  1 of 2: Creating PDF with all tables and plots...
+  2 of 2: Creating Icarus viewers...
+Done
+
+2024-12-28 05:18:49
+RESULTS:
+  Text versions of total report are saved to /maps/projects/mjolnir1/people/ncl550/1_projects/2025_wombats/3_Outputs/2_Coassemblies/nhnw_QUAST/report.txt, report.tsv, and report.tex
+  Text versions of transposed total report are saved to /maps/projects/mjolnir1/people/ncl550/1_projects/2025_wombats/3_Outputs/2_Coassemblies/nhnw_QUAST/transposed_report.txt, transposed_report.tsv, and transposed_report.tex
+  HTML version (interactive tables and plots) is saved to /maps/projects/mjolnir1/people/ncl550/1_projects/2025_wombats/3_Outputs/2_Coassemblies/nhnw_QUAST/report.html
+  PDF version (tables and plots) is saved to /maps/projects/mjolnir1/people/ncl550/1_projects/2025_wombats/3_Outputs/2_Coassemblies/nhnw_QUAST/report.pdf
+  Icarus (contig browser) is saved to /maps/projects/mjolnir1/people/ncl550/1_projects/2025_wombats/3_Outputs/2_Coassemblies/nhnw_QUAST/icarus.html
+  Log is saved to /maps/projects/mjolnir1/people/ncl550/1_projects/2025_wombats/3_Outputs/2_Coassemblies/nhnw_QUAST/quast.log
+
+Finished: 2024-12-28 05:18:49
+Elapsed time: 0:01:40.712064
+NOTICEs: 1; WARNINGs: 0; non-fatal ERRORs: 0
+
+Thank you for using QUAST!
