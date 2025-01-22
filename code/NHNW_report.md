@@ -1,17 +1,5 @@
----
-title: "NHNW_report"
-author: "Raphael Eisenhofer"
-format: 
-  gfm:
-    fig-width: 12
-    fig-height: 7
-    fig-dpi: 300
-  html:
-    fig-width: 12
-    fig-height: 7
-    fig-dpi: 300  
-editor: visual
----
+# NHNW_report
+Raphael Eisenhofer
 
 ## Northern Hairy-nosed Wombat faecal metagenomics
 
@@ -19,11 +7,11 @@ This report contains data from only the NHNW samples.
 
 ## Preprocessing report
 
-Here are the results for the preprocessing of the data, namely, fastp to trim/quality filter the paired reads and the mapping of filtered reads to the bare-nosed wombat genomes.
+Here are the results for the preprocessing of the data, namely, fastp to
+trim/quality filter the paired reads and the mapping of filtered reads
+to the bare-nosed wombat genomes.
 
-```{r}
-#| warning: false
-#| 
+``` r
 library(tidyverse)
 library(scales)
 library(ggtext)
@@ -46,19 +34,19 @@ ppr %>%
     axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)
   ) +
   ylab("Gigabases of filtered data")
-  
-
 ```
 
-Horizontal line indicates the mean (7.5) Gbp of data for the samples. There was minimal mapping of reads to the host genome: max = `r percent(max_host)` mean = `r percent(mean_host, accuracy = 0.01)`.
+![](NHNW_report_files/figure-commonmark/unnamed-chunk-1-1.png)
+
+Horizontal line indicates the mean (7.5) Gbp of data for the samples.
+There was minimal mapping of reads to the host genome: max = 2% mean =
+0.21%.
 
 ### Coassembly report
 
-Here's a summary of the coassembly and binning of all samples together.
+Here’s a summary of the coassembly and binning of all samples together.
 
-```{r}
-#| warning: false
-
+``` r
 coasb <- read_delim("../data/NHNW/nhnw_coassembly_summary.tsv")
 
 nbin <- max(coasb$num_bins)
@@ -71,19 +59,25 @@ coasb_mapping_max <- percent(max(coasb$assembly_mapping_percent/100), accuracy =
 coasb_mapping_min <- percent(min(coasb$assembly_mapping_percent/100), accuracy = 0.1)
 ```
 
-Coassembly yielded `r ncontig` contigs with a total length of `r total_length` Gbp. The longest contig was `r longest_contig` bp, with an average N50 of `r n50` bp. Overall the coassembly captured most of the metagenomic reads, with a mean mapping rate of `r coasb_mapping_mean` (max = `r coasb_mapping_max`; min = `r coasb_mapping_min`). Binning of these contigs yielded `r nbin` metagenome assembled genomes (MAGs).
+Coassembly yielded 2.19412^{5} contigs with a total length of 1.8294628
+Gbp. The longest contig was 8.16345^{5} bp, with an average N50 of
+2.2118^{4} bp. Overall the coassembly captured most of the metagenomic
+reads, with a mean mapping rate of 94.7% (max = 97.6%; min = 90.8%).
+Binning of these contigs yielded 600 metagenome assembled genomes
+(MAGs).
 
 ### Dereplication report
 
-Here is the report on the dereplication of the MAGs at an average nucleotide identity (ANI) of 98%. This is to help mitigate cross-mapping between highly similar MAGs in the final table. **No MAGs were dereplicated at this level.**
+Here is the report on the dereplication of the MAGs at an average
+nucleotide identity (ANI) of 98%. This is to help mitigate cross-mapping
+between highly similar MAGs in the final table. **No MAGs were
+dereplicated at this level.**
 
 ### Final MAG quality report
 
 Here are some stats for the quality of the final MAGs.
 
-```{r}
-#| warning: false
-
+``` r
 mags <- read_delim("../data/NHNW/nhnw_metawrap_70_10_bins.stats")
 
 comp <- mags %>% 
@@ -161,11 +155,11 @@ cont <- mags %>%
 comp / cont
 ```
 
+![](NHNW_report_files/figure-commonmark/unnamed-chunk-3-1.png)
+
 Most MAGs are of decent quality.
 
-```{r}
-#| warning: false
-
+``` r
 mags %>%
   ggplot(aes(x = "", y = size / 1000000)) +
   geom_jitter(width = 0.1, height = 0, alpha = 0.5) +
@@ -193,15 +187,23 @@ mags %>%
   ylab("MAG size (Mbp)")
 ```
 
-The mean MAG size is 2.1 Mbp. This is pretty low, but cool, as it suggests that most of these bacteria probably can't live outside the NHNW gut!
+![](NHNW_report_files/figure-commonmark/unnamed-chunk-4-1.png)
+
+The mean MAG size is 2.1 Mbp. This is pretty low, but cool, as it
+suggests that most of these bacteria probably can’t live outside the
+NHNW gut!
 
 ### How well did we capture the metagenomic samples?
 
-Using \`SingleM microbial_fraction\`, we can estimate how much prokaryotic DNA is in our metagenomes. We can then compare this to the mapping rate to calculate a **D**omain-**A**djusted **M**apping **R**ate (**DAMR**). This lets us know how well we've captured the prokaryotic community using our assembly/binning. For more info, see our paper describing the method: <https://www.biorxiv.org/content/10.1101/2024.05.16.594470v1>
+Using \`SingleM microbial_fraction\`, we can estimate how much
+prokaryotic DNA is in our metagenomes. We can then compare this to the
+mapping rate to calculate a **D**omain-**A**djusted **M**apping **R**ate
+(**DAMR**). This lets us know how well we’ve captured the prokaryotic
+community using our assembly/binning. For more info, see our paper
+describing the method:
+<https://www.biorxiv.org/content/10.1101/2024.05.16.594470v1>
 
-```{r}
-#| warning: false
-
+``` r
 smf <- read_delim("../data/NHNW/smf_nhnw.tsv") %>%
   mutate(sample = str_replace_all(sample, "_M_1", ""))
 mag_mapping <- read_delim("../data/NHNW/mag_mapping_rate.txt") %>%
@@ -239,4 +241,8 @@ mag_mapping %>%
   ylab("Domain-Adjusted Mapping Rate (%)")
 ```
 
-Overall, we've captured most of the prokaryote DNA in the samples (mean 77.3%). This is pretty decent considering the complexity of these microbial communities!
+![](NHNW_report_files/figure-commonmark/unnamed-chunk-5-1.png)
+
+Overall, we’ve captured most of the prokaryote DNA in the samples (mean
+77.3%). This is pretty decent considering the complexity of these
+microbial communities!

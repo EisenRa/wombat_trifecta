@@ -1,35 +1,26 @@
----
-title: "All wombats data report"
-author: "Raphael Eisenhofer"
-format:
-  gfm:
-    fig-width: 12
-    fig-height: 7
-    fig-dpi: 300
-  html:
-    fig-width: 12
-    fig-height: 7
-    fig-dpi: 300  
-editor: visual
----
+# All wombats data report
+Raphael Eisenhofer
 
-## Wombat "Trifecta" metagenomic data report
+## Wombat “Trifecta” metagenomic data report
 
-This report details the quality of the metagenomic data (from faecal samples) for all three different wombat species:
+This report details the quality of the metagenomic data (from faecal
+samples) for all three different wombat species:
 
--   *Lasiorhinus latifrons* (Southern Hairy-nosed Wombat; ) \[**SHNW**\]
+- *Lasiorhinus latifrons* (Southern Hairy-nosed Wombat; ) \[**SHNW**\]
 
--   *Lasiorhinus krefftii* (Northern Hairy-nosed Wombat; Yaminon) \[**NHNW**\]
+- *Lasiorhinus krefftii* (Northern Hairy-nosed Wombat; Yaminon)
+  \[**NHNW**\]
 
--   *Vombatus ursinus* (Bare-nosed Wombat) \[**BNW**\]
+- *Vombatus ursinus* (Bare-nosed Wombat) \[**BNW**\]
 
 ## Preprocessing report
 
-Here are the results for the preprocessing of the data, namely, fastp to trim/quality filter the paired reads and the mapping of filtered reads to the bare-nosed wombat genomes. (*There are currently no hairy-nosed wombat nuclear genomes as of 22/01/2025*).
+Here are the results for the preprocessing of the data, namely, fastp to
+trim/quality filter the paired reads and the mapping of filtered reads
+to the bare-nosed wombat genomes. (*There are currently no hairy-nosed
+wombat nuclear genomes as of 22/01/2025*).
 
-```{r}
-#| warning: false
-#| 
+``` r
 library(tidyverse)
 library(scales)
 library(ggtext)
@@ -74,19 +65,20 @@ ppr_merged %>%
     legend.position = "none"
   ) +
   ylab("Gigabases of filtered data")
-  
-
 ```
 
-Horizontal line indicates the mean `r number(mean_gbp, accuracy = 0.1)` Gbp of data for the samples. There was minimal mapping of reads to the host genome: max = `r percent(max_host)` mean = `r percent(mean_host, accuracy = 0.01)`.
+![](All_wombats_report_files/figure-commonmark/unnamed-chunk-1-1.png)
+
+Horizontal line indicates the mean 6.7 Gbp of data for the samples.
+There was minimal mapping of reads to the host genome: max = 23% mean =
+1.04%.
 
 ### Coassembly report
 
-Here's a summary of the coassembly and binning of all samples together by host species.
+Here’s a summary of the coassembly and binning of all samples together
+by host species.
 
-```{r}
-#| warning: false
-
+``` r
 coasb <- read_delim("../data/all_wombats/AB_assembly_binning.csv") %>%
   select(EHI_number, num_bins, assembly_mapping_percent, Host) %>%
   rename(host_species = Host, sample = EHI_number) %>%
@@ -124,15 +116,20 @@ coasb_merged %>%
   ylab("% of reads mapping to coassemblies")
 ```
 
-Overall the coassembly captured most of the metagenomic reads, with a mean mapping rate of `r coasb_mapping_mean` (max = `r coasb_mapping_max`; min = `r coasb_mapping_min`). Binning of these contigs yielded 600, 301, and 208 metagenome assembled genomes (MAGs) for the NHNW, SHNW, and BNW, respectively. Keep in mind that the microbial fractions may be different between species (more on this later).
+![](All_wombats_report_files/figure-commonmark/unnamed-chunk-2-1.png)
+
+Overall the coassembly captured most of the metagenomic reads, with a
+mean mapping rate of 90.6% (max = 97.6%; min = 71.0%). Binning of these
+contigs yielded 600, 301, and 208 metagenome assembled genomes (MAGs)
+for the NHNW, SHNW, and BNW, respectively. Keep in mind that the
+microbial fractions may be different between species (more on this
+later).
 
 ### Final MAG quality report
 
 Here are some stats for the quality of the final MAGs.
 
-```{r}
-#| warning: false
-
+``` r
 shnw_bnw_mags <- read_delim("../data/all_wombats/mag_info.csv") %>%
   select(mag_name, completeness, contamination, GC, size, host_species) %>%
   mutate(host_species = str_replace(host_species, 
@@ -230,11 +227,11 @@ cont <- mags %>%
 comp / cont
 ```
 
+![](All_wombats_report_files/figure-commonmark/unnamed-chunk-3-1.png)
+
 Most MAGs are of decent quality.
 
-```{r}
-#| warning: false
-
+``` r
 mags %>%
   ggplot(aes(x = host_species, y = size / 1000000)) +
   geom_jitter(width = 0.1, height = 0, alpha = 0.5) +
@@ -255,15 +252,23 @@ mags %>%
   ylab("MAG size (Mbp)")
 ```
 
-The mean MAG size is \~2 Mbp. This is pretty low, but cool, as it suggests that most of these bacteria probably can't live outside the NHNW gut!
+![](All_wombats_report_files/figure-commonmark/unnamed-chunk-4-1.png)
+
+The mean MAG size is ~2 Mbp. This is pretty low, but cool, as it
+suggests that most of these bacteria probably can’t live outside the
+NHNW gut!
 
 ### How well did we capture the metagenomic samples?
 
-Using \`SingleM microbial_fraction\`, we can estimate how much prokaryotic DNA is in our metagenomes. We can then compare this to the mapping rate to calculate a **D**omain-**A**djusted **M**apping **R**ate (**DAMR**). This lets us know how well we've captured the prokaryotic community using our assembly/binning. For more info, see our paper describing the method: <https://www.biorxiv.org/content/10.1101/2024.05.16.594470v1>
+Using \`SingleM microbial_fraction\`, we can estimate how much
+prokaryotic DNA is in our metagenomes. We can then compare this to the
+mapping rate to calculate a **D**omain-**A**djusted **M**apping **R**ate
+(**DAMR**). This lets us know how well we’ve captured the prokaryotic
+community using our assembly/binning. For more info, see our paper
+describing the method:
+<https://www.biorxiv.org/content/10.1101/2024.05.16.594470v1>
 
-```{r}
-#| warning: false
-
+``` r
 shnw_bnw_smf <- read_csv("../data/all_wombats/shnw_bnw_sample_info.csv") %>%
   select(EHI_number, singlem_fraction, project) %>%
   rename(host_species = project, sample = EHI_number) %>%
@@ -324,4 +329,8 @@ damr %>%
   ylab("Domain-Adjusted Mapping Rate (%)")
 ```
 
-Overall, we've captured most of the prokaryote DNA in the samples (mean `r mean_damr`). This is pretty decent considering the complexity of these microbial communities!
+![](All_wombats_report_files/figure-commonmark/unnamed-chunk-5-1.png)
+
+Overall, we’ve captured most of the prokaryote DNA in the samples (mean
+77.2%). This is pretty decent considering the complexity of these
+microbial communities!
