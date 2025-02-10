@@ -1,0 +1,619 @@
+
+# Differential abundance analysis
+
+```{r load_data_mag_filtdamr_diffe, comment="", echo=FALSE, message=FALSE, warning=FALSE, eval=FALSE}
+load("../data/data.Rdata")
+```
+
+## Squamata vs Rodentia
+### Structural zeros
+```{r struct_zero_capwild, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+samples <- sample_metadata %>% 
+  dplyr::select(sample) %>% pull()
+
+structural_zeros <- genome_counts %>% 
+   rowwise() %>% #compute for each row (genome)
+   mutate(all_zeros_pre = all(c_across(all_of(samples)) == 0)) %>% # set true if all samples in pre have zeros
+   mutate(average_pre = mean(c_across(all_of(samples)), na.rm = TRUE)) %>% # get average genome counts across pre
+   mutate(average_wild = mean(c_across(all_of(wild_samples)), na.rm = TRUE)) %>% # get average genome counts across wild
+   filter(all_zeros_pre == TRUE || all_zeros_wild==TRUE)  %>% # filter only genomes with structural zeros
+   mutate(present = case_when(
+      all_zeros_pre & !all_zeros_wild ~ "wild",
+      !all_zeros_pre & all_zeros_wild ~ "pre",
+      !all_zeros_pre & !all_zeros_wild ~ "None",
+      TRUE ~ NA_character_
+    )) %>%
+   mutate(average = ifelse(present == "pre", average_pre, average_wild)) %>%
+   dplyr::select(genome, present, average) %>%
+   left_join(genome_metadata, by=join_by(genome==genome)) %>%
+   arrange(present,-average)
+structural_zeros
+struct_mag <- structural_zeros %>% 
+  filter(present %in% c("pre","wild")) %>% 
+  select(genome) %>% 
+  pull()
+struct_mag_meta <- structural_zeros %>% 
+  filter(present %in% c("pre","wild"))
+```
+
+### Enrichment analysis: Ancombc2
+
+```{r zero_phylo1, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+#phyloseq object considering structual zeros
+phylo_samples <- sample_metadata %>% 
+                    column_to_rownames("sample") %>% 
+                    sample_data() #convert to phyloseq sample_data object
+phylo_genome <- genome_counts_filt %>% 
+                    filter(!genome %in% structural_zeros$genome) %>% # remove structural zeros
+                    column_to_rownames("genome") %>% 
+                    mutate_all(~ replace(., . == 0, 0.00001)) %>% #add pseudo counts to avoid structural zero issues (note this approach can be improved!)
+                    otu_table(., taxa_are_rows = TRUE)
+phylo_taxonomy <- genome_metadata %>% 
+                    filter(genome %in% rownames(phylo_genome)) %>% # remove structural zeros
+                    mutate(genome2=genome) %>% #create a pseudo genome name column
+                    column_to_rownames("genome2") %>% 
+                    dplyr::select(domain,phylum,class,order,family,genus,species,genome) %>% #add an additional taxonomic level to ensure genome-level analysis (as no all genomes have species-level taxonomic assignments. Otherwise, ANCOMBC2 aggregates analyses per species)
+                    as.matrix() %>% 
+                    tax_table() #convert to phyloseq tax_table object
+
+physeq_genome_filtered <- phyloseq(phylo_genome, phylo_taxonomy, phylo_samples)
+```
+
+
+```{r filtercapwild, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+physeq_sample <- subset_samples(physeq_genome_filtered, diet %in% c("Pre_grass","Wild"))
+physeq_sample <- prune_taxa(taxa_sums(physeq_sample)>0, physeq_sample)
+```
+
+#### MAG level
+```{r ancom_rand_capwild, comment="", echo=FALSE, message=FALSE, warning=FALSE, eval=FALSE}
+set.seed(1234) #set seed for reproducibility
+ancom_rand_output_mag_pre_wild = ancombc2(data = physeq_sample, 
+                  assay_name = "counts", 
+                  tax_level = NULL, #change to agglomerate analysis to a higher taxonomic range
+                  fix_formula = "diet", #fixed variable(s)
+ #                 rand_formula = "(1|individual)",
+                  p_adj_method = "holm", 
+                  pseudo_sens = TRUE,
+                  prv_cut =0, 
+                  lib_cut = 0, 
+                  s0_perc = 0.05,
+                  group = NULL, 
+                  struc_zero = FALSE, 
+                  neg_lb = FALSE,
+                  alpha = 0.05, 
+                  n_cl = 2, 
+                  verbose = TRUE,
+                  global = FALSE, 
+                  pairwise = FALSE, 
+                  dunnet = FALSE, 
+                  trend = FALSE,
+                  iter_control = list(tol = 1e-5, max_iter = 20, verbose = FALSE),
+                  em_control = list(tol = 1e-5, max_iter = 100),
+#                  lme_control = lme4::lmerControl(),
+                  mdfdr_control = list(fwer_ctrl_method = "holm", B = 100), 
+                  trend_control = NULL)
+```
+
+
+```{r ancom_table_capwild, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+taxonomy <- data.frame(physeq_sample@tax_table) %>%
+  rownames_to_column(., "taxon") %>%
+  mutate_at(vars(phylum, order, family, genus, species), ~ str_replace(., "[dpcofgs]__", ""))
+
+ancombc_rand_table_mag <- ancom_rand_output_mag_pre_wild$res %>%
+  dplyr::select(taxon, lfc_dietWild, p_dietWild) %>%
+  filter(p_dietWild < 0.05) %>%
+  dplyr::arrange(p_dietWild) %>%
+  left_join(taxonomy, by = join_by(taxon == taxon)) %>%
+  mutate_at(vars(phylum, species), ~ str_replace(., "[dpcofgs]__", ""))%>%
+  dplyr::arrange(lfc_dietWild)
+  
+colors_alphabetic <- read_tsv("https://raw.githubusercontent.com/earthhologenome/EHI_taxonomy_colour/main/ehi_phylum_colors.tsv") %>%
+    mutate_at(vars(phylum), ~ str_replace(., "[dpcofgs]__", ""))  %>%
+  right_join(taxonomy, by=join_by(phylum == phylum)) %>%
+  dplyr::select(phylum, colors) %>%
+  mutate(colors = str_c(colors, "80"))  %>% #add 80% alpha
+	unique() %>%
+	dplyr::arrange(phylum)
+
+tax_table <- as.data.frame(unique(ancombc_rand_table_mag$phylum))
+  
+colnames(tax_table)[1] <- "phylum"
+tax_color <- merge(tax_table, colors_alphabetic, by="phylum")%>%
+	dplyr::arrange(phylum) %>%
+	dplyr::select(colors) %>%
+	pull()
+```
+
+```{r ancombc_rand_plot_capwild, comment="", echo=FALSE, message=FALSE, warning=FALSE, fig.height=10, fig.width=8, fig.fullwidth=TRUE}
+ancombc_rand_table_mag%>%
+      mutate(genome=factor(genome,levels=ancombc_rand_table_mag$genome)) %>%
+ggplot(., aes(x=lfc_dietWild, y=forcats::fct_reorder(genome,lfc_dietWild), fill=phylum)) + #forcats::fct_rev()
+  geom_col() + 
+  scale_fill_manual(values=tax_color) + 
+  geom_hline(yintercept=0) + 
+  theme(panel.background = element_blank(),
+        axis.line = element_line(size = 0.5, linetype = "solid", colour = "black"),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 6),
+        axis.title = element_text(size = 14, face = "bold"),
+        legend.text = element_text(size = 12),
+        legend.title = element_text(size = 14, face = "bold"),
+        legend.position = "right", legend.box = "vertical")+
+  xlab("log2FoldChange") + 
+  ylab("Genome")+
+  guides(fill=guide_legend(title="Phylum"))
+```
+```{r ancom_rand_volcano_sp, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+#pdf("figures/different_species_StrucZero_new_violin.pdf",width=12, height=6)
+ancom_rand_output_mag_pre_wild$res %>%
+  na.omit() %>%
+  dplyr::select(genome=taxon, lfc_dietWild, p_dietWild) %>%
+  left_join(genome_metadata, by = join_by(genome == genome)) %>%
+  mutate(phylum = ifelse(p_dietWild < 0.05, phylum, NA)) %>%
+  ggplot(., aes(x = lfc_dietWild, y = -log(p_dietWild), color = phylum)) +
+  geom_point(size=3, show.legend = FALSE) +
+  #xlim(c(-10,4)) +
+  scale_color_manual(values = phylum_colors) +
+  labs(color = "Significant phylum", x = "Log-fold difference between pre and post grass", y = "p-value") +
+  theme_classic()
+#dev.off()
+```
+
+#### Genus level
+```{r ancom_rand_genus_capwild, comment="", echo=FALSE, message=FALSE, warning=FALSE, eval=FALSE}
+set.seed(1234) #set seed for reproducibility
+ancom_rand_output_mag_pre_wild_genus = ancombc2(data = physeq_sample, 
+                  assay_name = "counts", 
+                  tax_level = "genus", #change to agglomerate analysis to a higher taxonomic range
+                  fix_formula = "diet", #fixed variable(s)
+                  p_adj_method = "holm", 
+                  pseudo_sens = TRUE,
+                  prv_cut =0, 
+                  lib_cut = 0, 
+                  s0_perc = 0.05,
+                  group = NULL, 
+                  struc_zero = FALSE, 
+                  neg_lb = FALSE,
+                  alpha = 0.05, 
+                  n_cl = 2, 
+                  verbose = TRUE,
+                  global = FALSE, 
+                  pairwise = FALSE, 
+                  dunnet = FALSE, 
+                  trend = FALSE,
+                  iter_control = list(tol = 1e-5, max_iter = 20, verbose = FALSE),
+                  em_control = list(tol = 1e-5, max_iter = 100),
+                  mdfdr_control = list(fwer_ctrl_method = "holm", B = 100), 
+                  trend_control = NULL)
+
+```
+
+```{r ancom_rand_genus1_capwild, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+tax <- data.frame(physeq_genome_filtered@tax_table) %>%
+  rownames_to_column(., "taxon") %>%
+  mutate_at(vars(phylum, genus), ~ str_replace(., "[dpcofgs]__", ""))%>%
+  select(phylum, genus)%>%
+	unique()
+
+ancombc_rand_table_genus <- ancom_rand_output_mag_pre_wild_genus$res %>%
+  mutate_at(vars(taxon), ~ str_replace(., "[dpcofgs]__", ""))%>%
+  dplyr::select(taxon, lfc_dietWild, p_dietWild) %>%
+  filter(p_dietWild < 0.05) %>%
+  dplyr::arrange(lfc_dietWild)  %>%
+  left_join(tax, by=join_by(taxon == genus)) %>%
+  dplyr::arrange(lfc_dietWild)
+  
+colors_alphabetic <- read_tsv("https://raw.githubusercontent.com/earthhologenome/EHI_taxonomy_colour/main/ehi_phylum_colors.tsv") %>%
+  mutate_at(vars(phylum), ~ str_replace(., "[dpcofgs]__", ""))  %>%
+  right_join(tax, by=join_by(phylum == phylum)) %>%
+  dplyr::select(phylum, colors) %>%
+  mutate(colors = str_c(colors, "80"))  %>% #add 80% alpha
+	unique() %>%
+	dplyr::arrange(phylum)
+
+tax_table <- as.data.frame(unique(ancombc_rand_table_genus$phylum))
+  
+colnames(tax_table)[1] <- "phylum"
+tax_color <- merge(tax_table, colors_alphabetic, by="phylum")%>%
+	dplyr::arrange(phylum) %>%
+	dplyr::select(colors) %>%
+	pull()
+```
+
+```{r ancombc_rand_genus_plot_capwild, comment="", echo=FALSE, message=FALSE, warning=FALSE, fig.height=12, fig.width=8, fig.fullwidth=TRUE}
+genus_matrix <- ancombc_rand_table_genus%>%
+      mutate(taxon=factor(taxon,levels=ancombc_rand_table_genus$taxon)) %>%
+      filter(!is.na(phylum))
+
+genus_matrix <- genus_matrix %>% 
+  arrange(desc(-lfc_dietWild)) %>%                
+  slice_head(n = 15) %>%                      
+  bind_rows(                                  
+    genus_matrix %>%
+      arrange(-lfc_dietWild) %>%                      
+      slice_head(n = 15)) 
+
+tax_table <- as.data.frame(unique(genus_matrix$phylum))
+  
+colnames(tax_table)[1] <- "phylum"
+tax_color <- merge(tax_table, colors_alphabetic, by="phylum")%>%
+	dplyr::arrange(phylum) %>%
+	dplyr::select(colors) %>%
+	pull()
+
+genus_matrix %>%      
+ggplot(., aes(x=lfc_dietWild, y=forcats::fct_rev(taxon), fill=phylum)) + #forcats::fct_rev()
+  geom_col() + 
+  scale_fill_manual(values=tax_color) + 
+  geom_hline(yintercept=0) + 
+#  coord_flip()+
+  theme(panel.background = element_blank(),
+        axis.line = element_line(size = 0.5, linetype = "solid", colour = "black"),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 8),
+        axis.title = element_text(size = 14, face = "bold"),
+        legend.text = element_text(size = 12),
+        legend.title = element_text(size = 14, face = "bold"),
+        legend.position = "right", legend.box = "vertical")+
+  xlab("log2FoldChange") + 
+  ylab("Genus")+
+  guides(fill=guide_legend(title="Phylum"))
+```
+```{r ancom_rand_volcano_genus_capwild1, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+ancom_rand_output_mag_pre_wild_genus$res %>%
+  na.omit() %>%
+  dplyr::select(genome=taxon, lfc_dietWild, p_dietWild) %>%
+  left_join(genome_metadata, by = join_by(genome == genus)) %>%
+  mutate(phylum = ifelse(p_dietWild < 0.05, phylum, NA)) %>%
+  ggplot(., aes(x = lfc_dietWild, y = -log(p_dietWild), color = phylum)) +
+  geom_point(size=3, show.legend = FALSE) +
+  #xlim(c(-10,4)) +
+  scale_color_manual(values = phylum_colors) +
+  labs(color = "Significant phylum", x = "Log-fold difference between sample types", y = "p-value") +
+  theme_classic()+
+      geom_text(aes(5.5, 5), label = "Enriched\nin wild hares", color="#666666") +
+      geom_text(aes(-5, 5), label = "Enriched\nin captive hares", color="#666666") +
+      labs(color="Phylum", y="Log-fold", x="-log p-value") +
+      theme_classic()
+```
+
+#### Phylum level
+
+```{r ancom_phylum_capwild, comment="", echo=FALSE, message=FALSE, warning=FALSE, eval=FALSE}
+ancom_rand_output_phyl_capwild = ancombc2(data = physeq_sample, 
+                  assay_name = "counts", 
+                  tax_level = "phylum", #change to agglomerate analysis to a higher taxonomic range
+                  fix_formula = "diet", #fixed variable(s)
+                  p_adj_method = "holm", 
+                  pseudo_sens = TRUE,
+                  prv_cut = 0, 
+                  lib_cut = 0, 
+                  s0_perc = 0.05,
+                  group = NULL, 
+                  struc_zero = FALSE, 
+                  neg_lb = FALSE,
+                  alpha = 0.05, 
+                  n_cl = 2, 
+                  verbose = TRUE,
+                  global = FALSE, 
+                  pairwise = FALSE, 
+                  dunnet = FALSE, 
+                  trend = FALSE,
+                  iter_control = list(tol = 1e-5, max_iter = 20, verbose = FALSE),
+                  em_control = list(tol = 1e-5, max_iter = 100),
+                  mdfdr_control = list(fwer_ctrl_method = "holm", B = 100), 
+                  trend_control = NULL)
+```
+
+```{r ancom_rand_phylum_capwild, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+ancom_rand_output_phyl_capwild$res %>%
+  dplyr::select(taxon, lfc_dietWild, p_dietWild) %>%
+  filter(p_dietWild < 0.05) %>%
+  dplyr::arrange(p_dietWild) 
+```
+
+```{r ancom_table_genus_capwild, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+tax <- data.frame(physeq_sample@tax_table) %>%
+  rownames_to_column(., "taxon") %>%
+  mutate_at(vars(phylum, genus), ~ str_replace(., "[dpcofgs]__", ""))%>%
+  select(phylum)%>%
+	unique()
+
+ancombc_rand_table_phylum <- ancom_rand_output_phyl_capwild$res %>%
+  mutate_at(vars(taxon), ~ str_replace(., "[dpcofgs]__", ""))%>%
+  dplyr::select(taxon, lfc_dietWild, p_dietWild) %>%
+  filter(p_dietWild < 0.05) %>%
+  dplyr::arrange(lfc_dietWild)
+
+  
+colors_alphabetic <- read_tsv("https://raw.githubusercontent.com/earthhologenome/EHI_taxonomy_colour/main/ehi_phylum_colors.tsv") %>%
+  mutate_at(vars(phylum), ~ str_replace(., "[dpcofgs]__", ""))  %>%
+  right_join(tax, by=join_by(phylum == phylum)) %>%
+  dplyr::select(phylum, colors) %>%
+  mutate(colors = str_c(colors, "80"))  %>% #add 80% alpha
+	unique() %>%
+	dplyr::arrange(phylum)
+
+tax_color <- ancombc_rand_table_phylum %>% 
+  left_join(colors_alphabetic, by=join_by(taxon == phylum)) %>%
+	dplyr::arrange(taxon) %>%
+	dplyr::select(colors) %>%
+	pull()
+```
+
+```{r ancombc_rand_phylum_plot_capwild, comment="", echo=FALSE, message=FALSE, warning=FALSE, fig.height=10, fig.width=8, fig.fullwidth=TRUE}
+ancombc_rand_table_phylum%>%
+      mutate(taxon=factor(taxon,levels=ancombc_rand_table_phylum$taxon)) %>%
+ggplot(., aes(x=lfc_dietWild, y=forcats::fct_rev(taxon), fill=taxon)) + #forcats::fct_rev()
+  geom_col() + 
+  scale_fill_manual(values=tax_color) + 
+  geom_hline(yintercept=0) + 
+#  coord_flip()+
+  theme(panel.background = element_blank(),
+        axis.line = element_line(size = 0.5, linetype = "solid", colour = "black"),
+        axis.text.x = element_text(size = 12),
+        axis.text.y = element_text(size = 8),
+        axis.title = element_text(size = 14, face = "bold"),
+        legend.text = element_text(size = 12),
+        legend.title = element_text(size = 14, face = "bold"),
+        legend.position = "right", legend.box = "vertical")+
+  xlab("log2FoldChange") + 
+  ylab("phylum")+
+  guides(fill=guide_legend(title="Phylum"))
+```
+
+```{r ancom_rand_volcano_phyl_capwild, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+ancom_rand_output_phyl_capwild$res %>%
+  na.omit() %>%
+  dplyr::select(phylum=taxon, lfc_dietWild, p_dietWild) %>%
+  left_join(genome_metadata, by = join_by(phylum == phylum)) %>%
+  mutate(phylum = ifelse(p_dietWild < 0.05, phylum, NA)) %>%
+  ggplot(., aes(x = lfc_dietWild, y = -log(p_dietWild), color = phylum)) +
+  geom_point(size=3, show.legend = FALSE) +
+  #xlim(c(-10,4)) +
+  scale_color_manual(values = phylum_colors) +
+  labs(color = "Significant phylum", x = "Log-fold difference between sample types", y = "p-value") +
+  theme_classic()+
+      geom_text(aes(5.5, 5), label = "Enriched\nin wild hares", color="#666666") +
+      geom_text(aes(-1, 5), label = "Enriched\nin captive hares", color="#666666") +
+      labs(color="Phylum", y="Log-fold", x="-log p-value") +
+      theme_classic()
+```
+```{r ancom_save_wildcapt, comment="", echo=FALSE, message=FALSE, warning=FALSE, eval=FALSE}
+save(ancom_rand_output_mag_pre_wild,
+     ancom_rand_output_mag_pre_wild_genus,
+     ancom_rand_output_phyl_capwild,
+     file="data/ancombc_filtered_wild_captive.Rdata")
+```
+
+
+#### Relative abundances of Spirochaetota
+```{r spiro_capwild, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+spiro_mags <- genome_metadata %>% 
+  filter(phylum=="p__Spirochaetota")
+
+genome_counts_filt %>%
+  mutate_at(vars(-genome),~./sum(.))%>%
+  filter(genome %in% spiro_mags$genome) %>% 
+  pivot_longer(!genome, names_to = "sample", values_to = "abundance") %>% 
+  left_join(sample_metadata, by=join_by(sample==sample)) %>% 
+  filter(diet!="Post_grass") %>% 
+  ggplot(aes(y = abundance, x = diet, group=diet, color=diet, fill=diet)) +
+  geom_jitter(width = 0.2, show.legend = FALSE) +
+  geom_boxplot(width = 0.5, alpha=0.5,outlier.shape = NA, show.legend = FALSE) +
+  scale_color_manual(values=diet_colors)+
+  scale_fill_manual(values=diet_colors) +
+  scale_x_discrete(labels=c("Wild" = "Wild", "Pre_grass" = "Captive-bred")) +
+  coord_cartesian(xlim = c(1, NA)) +
+  theme_classic() +
+  theme(
+    strip.background = element_blank(),
+    panel.grid.minor.x = element_line(size = .1, color = "grey"),
+    axis.text = element_text(size=10),
+    axis.title.y = element_text(margin = margin(t = 0, r = 20, b = 0, l = 0)),
+    axis.title.x = element_text(margin = margin(t = 20, r = 0, b = 0, l = 0))
+    )+
+  labs(x = "Origin", y = "Spirochaetota")
+```
+
+
+## Captive: before and after grass
+
+### Structural zeros
+
+```{r struct_zero, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+pre_samples <- sample_metadata %>% 
+  filter(diet == "Pre_grass") %>%
+  dplyr::select(sample) %>%
+  pull()
+
+post_samples <- sample_metadata %>% 
+  filter(diet == "Post_grass") %>%
+  dplyr::select(sample) %>% pull()
+
+structural_zeros <- genome_counts %>% 
+   rowwise() %>% #compute for each row (genome)
+   mutate(all_zeros_pre = all(c_across(all_of(pre_samples)) == 0)) %>% # set true if all samples in TJ1 have zeros
+   mutate(all_zeros_post = all(c_across(all_of(post_samples)) == 0)) %>% # set true if all samples in TJ2 have zeros
+   mutate(average_pre = mean(c_across(all_of(pre_samples)), na.rm = TRUE)) %>% # get average genome counts across TJ1
+   mutate(average_post = mean(c_across(all_of(post_samples)), na.rm = TRUE)) %>% # get average genome counts across TJ2
+   filter(all_zeros_pre == TRUE || all_zeros_post==TRUE)  %>% # filter only genomes with structural zeros
+   mutate(present = case_when(
+      all_zeros_pre & !all_zeros_post ~ "post",
+      !all_zeros_pre & all_zeros_post ~ "pre",
+      !all_zeros_pre & !all_zeros_post ~ "None",
+      TRUE ~ NA_character_
+    )) %>%
+   mutate(average = ifelse(present == "pre", average_pre, average_post)) %>%
+   dplyr::select(genome, present, average) %>%
+   left_join(genome_metadata, by=join_by(genome==genome)) %>%
+   arrange(present,-average)
+```
+
+### Enrichment analysis: Ancombc2
+
+```{r zero_phylo2, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+#phyloseq object considering structual zeros
+phylo_samples <- sample_metadata %>% 
+                    column_to_rownames("sample") %>% 
+                    sample_data() #convert to phyloseq sample_data object
+phylo_genome <- genome_counts_filt %>% 
+                    filter(!genome %in% structural_zeros$genome) %>% # remove structural zeros
+                    column_to_rownames("genome") %>% 
+                    mutate_all(~ replace(., . == 0, 0.00001)) %>% #add pseudo counts to avoid structural zero issues (note this approach can be improved!)
+                    otu_table(., taxa_are_rows = TRUE)
+phylo_taxonomy <- genome_metadata %>% 
+                    filter(genome %in% rownames(phylo_genome)) %>% # remove structural zeros
+                    mutate(genome2=genome) %>% #create a pseudo genome name column
+                    column_to_rownames("genome2") %>% 
+                    dplyr::select(domain,phylum,class,order,family,genus,species,genome) %>% #add an additional taxonomic level to ensure genome-level analysis (as no all genomes have species-level taxonomic assignments. Otherwise, ANCOMBC2 aggregates analyses per species)
+                    as.matrix() %>% 
+                    tax_table() #convert to phyloseq tax_table object
+
+physeq_genome_filtered <- phyloseq(phylo_genome, phylo_taxonomy, phylo_samples)
+```
+
+```{r filter_pre_post, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+physeq_sample <- subset_samples(physeq_genome_filtered, diet %in% c("Pre_grass","Post_grass"))
+physeq_sample <- prune_taxa(taxa_sums(physeq_sample)>0, physeq_sample)
+```
+
+#### Relative abundances of archaea
+
+```{r arachea_abundances, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+meta_mags <- genome_metadata %>% 
+  filter(phylum=="p__Methanobacteriota")
+
+genome_counts_filt %>%
+  mutate_at(vars(-genome),~./sum(.))%>%
+  filter(genome %in% meta_mags$genome) %>% 
+  pivot_longer(!genome, names_to = "sample", values_to = "abundance") %>% 
+  left_join(sample_metadata, by=join_by(sample==sample)) %>% 
+  filter(diet!="Wild") %>%
+  group_by(diet) %>% 
+  summarize(mean_Archaea=mean(abundance), sd_Archaea=sd(abundance), 
+            max_Archaea=max(abundance), min_Archaea=min(abundance),
+            zero_count = sum(abundance == 0, na.rm = TRUE))
+  
+genome_counts_filt %>%
+  mutate_at(vars(-genome),~./sum(.))%>%
+  filter(genome %in% meta_mags$genome) %>% 
+  pivot_longer(!genome, names_to = "sample", values_to = "abundance") %>% 
+  left_join(sample_metadata, by=join_by(sample==sample)) %>% 
+  filter(diet!="Wild") %>% 
+  ggplot(aes(y = abundance, x = diet, group=diet, color=diet, fill=diet)) +
+  geom_jitter(width = 0.2, show.legend = FALSE) +
+  geom_boxplot(width = 0.5, alpha=0.5,outlier.shape = NA, show.legend = FALSE) +
+  scale_color_manual(values=diet_colors)+
+  scale_fill_manual(values=diet_colors) +
+  scale_x_discrete(labels=c("Post_grass" = "Grass", "Pre_grass" = "No grass")) +
+  coord_cartesian(xlim = c(1, NA)) +
+  theme_classic() +
+  theme(
+    strip.background = element_blank(),
+    panel.grid.minor.x = element_line(size = .1, color = "grey"),
+    axis.text = element_text(size=10),
+    axis.title.y = element_text(margin = margin(t = 0, r = 20, b = 0, l = 0)),
+    axis.title.x = element_text(margin = margin(t = 20, r = 0, b = 0, l = 0))
+    )+
+  labs(x = "Diet", y = "Methanobacteriota")
+```
+
+#### MAG level
+```{r ancom_rand_pre_post, comment="", echo=FALSE, message=FALSE, warning=FALSE, eval=FALSE}
+set.seed(1234) #set seed for reproducibility
+ancom_rand_output_mag_pre_post = ancombc2(data = physeq_sample, 
+                  assay_name = "counts", 
+                  tax_level = NULL, #change to agglomerate analysis to a higher taxonomic range
+                  fix_formula = "diet", #fixed variable(s)
+                  rand_formula = "(1|individual)",
+                  p_adj_method = "holm", 
+                  pseudo_sens = TRUE,
+                  prv_cut =0, 
+                  lib_cut = 0, 
+                  s0_perc = 0.05,
+                  group = NULL, 
+                  struc_zero = FALSE, 
+                  neg_lb = FALSE,
+                  alpha = 0.05, 
+                  n_cl = 2, 
+                  verbose = TRUE,
+                  global = FALSE, 
+                  pairwise = FALSE, 
+                  dunnet = FALSE, 
+                  trend = FALSE,
+                  iter_control = list(tol = 1e-5, max_iter = 20, verbose = FALSE),
+                  em_control = list(tol = 1e-5, max_iter = 100),
+                  lme_control = lme4::lmerControl(),
+                  mdfdr_control = list(fwer_ctrl_method = "holm", B = 100), 
+                  trend_control = NULL)
+
+```
+
+```{r ancom_rand1_pre_post, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+taxonomy <- data.frame(physeq_sample@tax_table) %>%
+  rownames_to_column(., "taxon") %>%
+  mutate_at(vars(phylum, order, family, genus, species), ~ str_replace(., "[dpcofgs]__", ""))
+
+ancombc_rand_table_mag <- ancom_rand_output_mag_pre_post$res %>%
+  dplyr::select(taxon, lfc_dietPre_grass, p_dietPre_grass) %>%
+  filter(p_dietPre_grass < 0.05) %>%
+  dplyr::arrange(p_dietPre_grass) %>%
+  merge(., taxonomy, by="taxon") %>%
+  mutate_at(vars(phylum, species), ~ str_replace(., "[dpcofgs]__", ""))%>%
+  dplyr::arrange(lfc_dietPre_grass)
+  
+colors_alphabetic <- read_tsv("https://raw.githubusercontent.com/earthhologenome/EHI_taxonomy_colour/main/ehi_phylum_colors.tsv") %>%
+  mutate_at(vars(phylum), ~ str_replace(., "[dpcofgs]__", ""))  %>%
+  right_join(taxonomy, by=join_by(phylum == phylum)) %>%
+  dplyr::select(phylum, colors) %>%
+  mutate(colors = str_c(colors, "80"))  %>% #add 80% alpha
+	unique() %>%
+	dplyr::arrange(phylum)
+
+tax_table <- as.data.frame(unique(ancombc_rand_table_mag$phylum))
+  
+colnames(tax_table)[1] <- "phylum"
+tax_color <- merge(tax_table, colors_alphabetic, by="phylum")%>%
+	dplyr::arrange(phylum) %>%
+	dplyr::select(colors) %>%
+	pull()
+```
+
+```{r ancombc_rand_plot_pre_post, comment="", echo=FALSE, message=FALSE, warning=FALSE, fig.height=5, fig.width=6, fig.fullwidth=TRUE}
+ancombc_rand_table_mag%>%
+      mutate(genome=factor(genome,levels=ancombc_rand_table_mag$genome)) %>%
+ggplot(., aes(x=lfc_dietPre_grass, y=forcats::fct_reorder(genome,lfc_dietPre_grass), fill=phylum)) + #forcats::fct_rev()
+  geom_col() + 
+  scale_fill_manual(values=tax_color) + 
+  geom_hline(yintercept=0) + 
+#  coord_flip()+
+  theme(panel.background = element_blank(),
+        axis.line = element_line(size = 0.5, linetype = "solid", colour = "black"),
+        axis.text.x = element_text(size = 10),
+        axis.text.y = element_text(size = 8),
+        axis.title = element_text(size = 12, face = "bold"),
+        legend.text = element_text(size = 10),
+        legend.title = element_text(size = 12, face = "bold"),
+        legend.position = "right", legend.box = "vertical")+
+  xlab("log2FoldChange") + 
+  ylab("Genome")+
+  guides(fill=guide_legend(title="Phylum"))
+```
+
+```{r ancom_rand_volcano_pre_post, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+#pdf("figures/different_species_StrucZero_new_violin.pdf",width=12, height=6)
+ancom_rand_output_mag_pre_post$res %>%
+  na.omit() %>%
+  dplyr::select(genome=taxon, lfc_dietPre_grass, p_dietPre_grass) %>%
+  left_join(genome_metadata, by = join_by(genome == genome)) %>%
+  mutate(phylum = ifelse(p_dietPre_grass < 0.05, phylum, NA)) %>%
+  ggplot(., aes(x = lfc_dietPre_grass, y = -log(p_dietPre_grass), color = phylum)) +
+  geom_point(size=3, show.legend = FALSE) +
+  scale_color_manual(values = phylum_colors) +
+  labs(color = "Significant phylum", x = "Log-fold difference between pre and post grass", y = "p-value") +
+  theme_classic()
+#dev.off()
+```

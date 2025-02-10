@@ -1,0 +1,390 @@
+# Community composition
+
+## Filter data
+
+```{r load_data_community, comment="", message=FALSE, warning=FALSE, eval=FALSE}
+load("../data/data.Rdata")
+```
+
+Filter samples with high host data
+```{r load_data_host_filtering, comment="", message=FALSE, warning=FALSE, eval=FALSE}
+
+genome_counts_filt <- genome_counts %>%
+  select(one_of(c("genome",sample_metadata$sample)))%>%
+  filter(rowSums(. != 0, na.rm = TRUE) > 0) %>%
+  select_if(~!all(. == 0))
+genome_counts <- genome_counts_filt
+genome_metadata <- genome_metadata %>% 
+  semi_join(., genome_counts_filt, by = "genome") %>% 
+  arrange(match(genome,genome_counts_filt$genome))
+
+genome_tree <- keep.tip(genome_tree, tip=genome_metadata$genome) # keep only MAG tips
+
+#load("data/genome_gifts.Rdata")
+```
+
+## Taxonomy overview 
+
+### Stacked barplot
+
+```{r taxonomy_barplot, fig.height=6, fig.width=10, fig.fullwidth=TRUE}
+genome_counts_filt %>%
+  mutate_at(vars(-genome),~./sum(.)) %>% #apply TSS normalisation
+  pivot_longer(-genome, names_to = "sample", values_to = "count") %>% #reduce to minimum number of columns
+  left_join(., genome_metadata, by = join_by(genome == genome)) %>% #append genome metadata
+  left_join(., sample_metadata, by = join_by(sample == sample)) %>% #append sample metadata
+  filter(count > 0) %>% #filter 0 counts
+  ggplot(., aes(x=sample,y=count, fill=phylum, group=phylum)) + #grouping enables keeping the same sorting of taxonomic units
+    geom_bar(stat="identity", colour="white", linewidth=0.1) + #plot stacked bars with white borders
+    scale_fill_manual(values=phylum_colors) +
+    facet_nested(. ~ host_order.x+host_species.x,  scales="free") + #facet 
+    guides(fill = guide_legend(ncol = 1)) +
+    theme(
+          axis.title.x = element_blank(),
+          panel.background = element_blank(),
+          panel.border = element_blank(),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank(),
+          strip.background = element_rect(fill = "lightgrey"),
+          strip.text = element_text(size = 12, lineheight = 0.6),
+          strip.placement = "outside",
+          axis.text.x = element_blank(), axis.ticks.x = element_blank(),
+          axis.line = element_line(linewidth = 0.5, linetype = "solid", colour = "black")) +
+   labs(fill="Phylum",y = "Relative abundance",x="Samples")
+```
+
+**Number of bacteria phyla**
+
+```{r phyla, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+genome_metadata %>% 
+  filter(domain == "d__Bacteria")%>%
+  dplyr::select(phylum) %>%
+  unique() %>%
+  pull() %>%
+  length()
+```
+
+**Bacteria phyla in squamates**
+
+```{r phyla_nat, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+
+squamates <- sample_metadata %>% 
+  filter(sample != "EHI01806" & sample != "EHI01812") %>%
+  filter(host_order=="Squamata") %>% 
+  dplyr::select(sample) %>% 
+  pull()
+
+squamate_genomes <- genome_counts %>% 
+  column_to_rownames("genome") %>% 
+  select(all_of(squamates)) %>%
+  as.data.frame() %>%
+  filter(rowSums(across(where(is.numeric)))!=0)%>% 
+  rownames_to_column("genome")%>% 
+  dplyr::select(genome) %>% 
+  pull()
+
+genome_metadata %>% 
+  filter(genome %in% squamate_genomes) %>% 
+  filter(domain == "d__Bacteria")%>%
+  dplyr::select(phylum) %>%
+  unique() %>%
+  pull() %>%
+  length() 
+```
+
+**Bacterial phyla in rodents**
+
+```{r phyla_cap, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+
+rodents <- sample_metadata %>% 
+  filter(host_order=="Rodentia") %>% 
+  dplyr::select(sample) %>% 
+  pull()
+
+rodent_genomes <- genome_counts %>% 
+  column_to_rownames("genome") %>% 
+  select(all_of(rodents)) %>%
+  as.data.frame() %>%
+  filter(rowSums(across(where(is.numeric)))!=0)%>% 
+  rownames_to_column("genome")%>% 
+  dplyr::select(genome) %>% 
+  pull()
+
+genome_metadata %>% 
+  filter(genome %in% rodent_genomes) %>% 
+  filter(domain == "d__Bacteria")%>%
+  dplyr::select(phylum) %>%
+  unique() %>%
+  pull() %>%
+  length() 
+```
+
+
+
+**Number of Archaeal phyla**
+
+```{r arch, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+genome_metadata %>% 
+  filter(domain == "d__Archaea")%>%
+  dplyr::select(phylum) %>%
+  unique() %>%
+  pull() %>%
+  length()
+```
+
+**Archaea phyla in squamates**
+
+```{r arch_nat, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+genome_metadata %>% 
+  filter(genome %in% squamate_genomes) %>% 
+  filter(domain == "d__Archaea")%>%
+  dplyr::select(phylum) %>%
+  unique() %>%
+  pull() %>%
+  length()
+```
+
+**Archaea phyla in rodents**
+
+```{r arch_pre, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+genome_metadata %>% 
+  filter(genome %in% rodent_genomes) %>% 
+  filter(domain == "d__Archaea") %>%
+  dplyr::select(phylum) %>%
+  unique() %>%
+  pull()
+```
+
+
+### Genus and species annotation
+
+**Number of MAGs without species-level annotation**
+```{r nonspe, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+genome_metadata %>%
+  filter(species == "s__") %>%
+  summarize(Mag_nospecies = n())%>%
+  select(Mag_nospecies) %>% 
+  pull()
+
+```
+```{r nonspe_phylum, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+total_mag_phylum <- genome_metadata %>%
+  group_by(phylum) %>%
+  summarize(count_total = n())
+genome_metadata %>%
+  filter(species == "s__") %>%
+  group_by(phylum) %>%
+  summarize(count_nospecies = n()) %>% 
+  left_join(total_mag_phylum, by = join_by(phylum == phylum)) %>% 
+  mutate(percentage=100*count_nospecies/count_total) %>% 
+  tt()
+
+```
+
+**Percentage of MAGs without species-level annotation**
+```{r sp_percet, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+nmags <- nrow(genome_counts)
+nonspecies <- genome_metadata %>%
+    filter(species == "s__") %>%
+    nrow()
+perct <- nonspecies*100/nmags
+perct
+```
+
+**Number of MAGs without genera-level annotation**
+```{r nongenera, comment="", echo=FALSE, message=FALSE, warning=FALSE}
+nongenera <- genome_metadata %>%
+    filter(genus == "g__") %>%
+    nrow()
+cat(nongenera)
+```
+
+
+### Phylum relative abundances
+
+```{r taxonomy_phylum_summary, warning=FALSE, comments="", message=FALSE}
+phylum_summary <- genome_counts_filt %>%
+  mutate_at(vars(-genome),~./sum(.)) %>% #apply TSS nornalisation
+  pivot_longer(-genome, names_to = "sample", values_to = "count") %>%
+  left_join(sample_metadata, by = join_by(sample == sample)) %>%
+  left_join(genome_metadata, by = join_by(genome == genome)) %>%
+  group_by(sample,phylum,region, host_order.x) %>%
+  summarise(relabun=sum(count))
+```
+
+```{r taxonomy_boxplot_phylum, warning=FALSE, comments="", message=FALSE, fig.height=8, fig.width=10, fig.fullwidth=TRUE}
+phylum_arrange <- phylum_summary %>%
+    group_by(phylum) %>%
+    summarise(mean=mean(relabun)) %>%
+    arrange(-mean) %>%
+    select(phylum) %>%
+    pull()
+
+phylum_summary %>%
+    filter(phylum %in% phylum_arrange) %>%
+    mutate(phylum=factor(phylum,levels=rev(phylum_arrange))) %>%
+    ggplot(aes(x=relabun, y=phylum, group=phylum, color=phylum)) +
+        scale_color_manual(values=phylum_colors[rev(phylum_arrange)]) +
+        geom_jitter(alpha=0.5) + 
+        theme_minimal() + 
+        theme(legend.position="none") +
+        labs(y="Phylum",x="Relative abundance")
+```
+
+#### Origin: squamate vs rodent
+```{r taxonomy_phylum_summary_origin, warning=FALSE, comments="", message=FALSE}
+phylum_summary %>%
+    group_by(phylum) %>%
+    summarise(total_mean=mean(relabun*100, na.rm=T),
+              total_sd=sd(relabun*100, na.rm=T),
+              squamate_mean=mean(relabun[host_order.x=="Squamate"]*100, na.rm=T),
+              squamate_sd=sd(relabun[host_order.x=="Squamate"]*100, na.rm=T),
+              rodent_mean=mean(relabun[host_order.x=="Rodentia"]*100, na.rm=T),
+              rodent_sd=sd(relabun[host_order.x=="Rodentia"]*100, na.rm=T)) %>%
+    mutate(total=str_c(round(total_mean,3),"±",round(total_sd,3)),
+           squamate=str_c(round(squamate_mean,3),"±",round(squamate_sd,3)),
+           rodent=str_c(round(rodent_mean,3),"±",round(rodent_sd,3))) %>% 
+    arrange(-total_mean) %>% 
+    dplyr::select(phylum,total,squamate,rodent)
+```
+
+
+
+```{r taxonomy_jitterplot_phylum, warning=FALSE, comments="", message=FALSE, fig.height=8, fig.width=10, fig.fullwidth=TRUE}
+phylum_arrange <- phylum_summary %>%
+    group_by(phylum) %>%
+    summarise(mean=sum(relabun)) %>%
+    arrange(-mean) %>%
+    select(phylum) %>%
+    pull()
+
+phylum_summary %>%
+    left_join(genome_metadata %>% select(phylum,phylum) %>% unique(),by=join_by(phylum==phylum)) %>%
+#    left_join(sample_metadata,by=join_by(sample==sample)) %>%
+    filter(phylum %in% phylum_arrange[1:20]) %>%
+    mutate(phylum=factor(phylum,levels=rev(phylum_arrange[1:20]))) %>%
+    filter(relabun > 0) %>%
+    ggplot(aes(x=relabun, y=phylum, group=phylum, color=phylum)) +
+        scale_color_manual(values=phylum_colors[-8]) +
+        geom_jitter(alpha=0.5) + 
+        facet_grid(.~host_order.x)+
+        theme_minimal() + 
+        labs(y="phylum", x="Relative abundance", color="Phylum")
+```
+
+## Taxonomy boxplot
+
+### Family
+
+```{r taxonomy_family_summary, warning=FALSE, comments="", message=FALSE}
+family_summary <- genome_counts_filt %>%
+  mutate_at(vars(-genome),~./sum(.)) %>% #apply TSS normalisation
+  pivot_longer(-genome, names_to = "sample", values_to = "count") %>% #reduce to minimum number of columns
+  left_join(sample_metadata, by = join_by(sample == sample)) %>% #append sample metadata
+  left_join(., genome_metadata, by = join_by(genome == genome)) %>% #append genome metadata
+  group_by(sample, family, host_order.x) %>%
+  summarise(relabun=sum(count))
+```
+
+#### Family: squamate vs rodent
+```{r taxonomy_family_summary_origin, warning=FALSE, comments="", message=FALSE}
+family_summary %>%
+    group_by(family) %>%
+    summarise(total_mean=mean(relabun*100, na.rm=T),
+              total_sd=sd(relabun*100, na.rm=T),
+              squamate_mean=mean(relabun[host_order.x=="Squamata"]*100, na.rm=T),
+              squamate_sd=sd(relabun[host_order.x=="Squamata"]*100, na.rm=T),
+              rodent_mean=mean(relabun[host_order.x=="Rodentia"]*100, na.rm=T),
+              rodent_sd=sd(relabun[host_order.x=="Rodentia"]*100, na.rm=T))  %>%
+    mutate(Total=str_c(round(total_mean,2),"±",round(total_sd,2)),
+           squamate=str_c(round(squamate_mean,2),"±",round(squamate_sd,2)),
+           rodent=str_c(round(rodent_mean,2),"±",round(rodent_sd,2))) %>% 
+    arrange(-total_mean) %>% 
+    dplyr::select(family,Total,squamate,rodent) %>% 
+    paged_table()
+```
+
+
+```{r taxonomy_jitterplot_family, warning=FALSE, comments="", message=FALSE, fig.height=8, fig.width=10, fig.fullwidth=TRUE}
+family_arrange <- family_summary %>%
+    group_by(family) %>%
+    summarise(mean=sum(relabun)) %>%
+    arrange(-mean) %>%
+    select(family) %>%
+    pull()
+
+family_summary %>%
+    left_join(genome_metadata %>% select(family,phylum) %>% unique(),by=join_by(family==family)) %>%
+    filter(family %in% family_arrange[1:20]) %>%
+    mutate(family=factor(family,levels=rev(family_arrange[1:20]))) %>%
+    filter(relabun > 0) %>%
+    ggplot(aes(x=relabun, y=family, group=family, color=phylum)) +
+        scale_color_manual(values=phylum_colors[-8]) +
+        geom_jitter(alpha=0.5) + 
+        facet_grid(.~host_order.x)+
+        theme_minimal() + 
+        labs(y="Family", x="Relative abundance", color="Phylum")
+```
+
+### Genus
+
+```{r taxonomy_genus_summary, warning=FALSE, comments="", message=FALSE}
+genus_summary <- genome_counts_filt %>%
+  mutate_at(vars(-genome),~./sum(.)) %>% #apply TSS nornalisation
+  pivot_longer(-genome, names_to = "sample", values_to = "count") %>% #reduce to minimum number of columns
+  left_join(sample_metadata, by = join_by(sample == sample)) %>% #append sample metadata
+  left_join(genome_metadata, by = join_by(genome == genome)) %>% #append genome metadata
+  group_by(sample, phylum, genus, host_order.x) %>%
+  summarise(relabun=sum(count)) %>%
+  filter(genus != "g__") %>%
+  mutate(genus= sub("^g__", "", genus))
+```
+
+### origin and diet
+```{r taxonomy_genera_summary_oridiet, warning=FALSE, comments="", message=FALSE}
+genus_summary %>%
+    group_by(genus) %>%
+    summarise(total_mean=mean(relabun*100, na.rm=T),
+              total_sd=sd(relabun*100, na.rm=T),
+              squamate_mean=mean(relabun[host_order.x=="Squamata"]*100, na.rm=T),
+              squamate_sd=sd(relabun[host_order.x=="Squamata"]*100, na.rm=T),
+              rodent_mean=mean(relabun[host_order.x=="Rodentia"]*100, na.rm=T),
+              rodent_sd=sd(relabun[host_order.x=="Rodentia"]*100, na.rm=T)
+              ) %>%
+    mutate(Total=str_c(round(total_mean,2),"±",round(total_sd,2)),
+           squamate=str_c(round(squamate_mean,2),"±",round(squamate_sd,2)),
+           rodent=str_c(round(rodent_mean,2),"±",round(rodent_sd,2))
+           ) %>%
+    arrange(-total_mean) %>% 
+    dplyr::select(genus,Total,squamate,rodent) %>% 
+    paged_table()
+```
+
+```{r taxonomy_jitterplot_genus, fig.height=14, fig.width=10, fig.fullwidth=TRUE}
+genus_arrange <- genus_summary %>%
+    group_by(genus) %>%
+    summarise(mean=sum(relabun)) %>%
+    filter(genus != "g__")%>%
+    arrange(-mean) %>%
+    select(genus) %>%
+    mutate(genus= sub("^g__", "", genus)) %>%
+    pull()
+
+genus_summary_sort <- genus_summary %>%
+    group_by(genus) %>%
+    summarise(mean=mean(relabun, na.rm=T),sd=sd(relabun, na.rm=T)) %>%
+    arrange(-mean) 
+
+genus_summary %>%
+  mutate(genus=factor(genus, levels=rev(genus_summary_sort %>% pull(genus)))) %>%
+  filter(relabun > 0) %>%
+  ggplot(aes(x=relabun, y=genus, group=genus, color=phylum)) +
+  scale_color_manual(values=phylum_colors) +
+  geom_jitter(alpha=0.5) + 
+  facet_grid(.~host_order.x)+
+  theme_minimal() + 
+  theme(axis.text.y = element_text(size=6))+
+  labs(y="Family", x="Relative abundance", color="Phylum")
+
+```
+
