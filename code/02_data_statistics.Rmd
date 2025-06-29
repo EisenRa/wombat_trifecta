@@ -4,21 +4,11 @@
 load("../data/data.Rdata")
 ```
 
-## filter samples with high host data
-```{r load_data_host_filt, comment="", message=FALSE, warning=FALSE, eval=FALSE}
-
-read_counts <- read_counts %>% 
-  select(one_of(c("genome", sample_metadata$sample))) %>%
-  filter(rowSums(. != 0, na.rm = TRUE) > 0) %>%
-  select_if(~!all(. == 0))
-
-genome_metadata <- genome_metadata %>% 
-  semi_join(., read_counts, by = "genome") %>% 
-  arrange(match(genome,read_counts$genome))
-
-genome_tree <- keep.tip(genome_tree, tip=genome_metadata$genome) # keep only MAG tips
-
-#load("data/genome_gifts.Rdata")
+```{r packs, warning=FALSE, comments="", message=FALSE}
+library(tidyverse)
+library(phyloseq)
+library(ape)
+library(tinytable)
 ```
 
 ## Sequencing reads statistics
@@ -34,8 +24,9 @@ sample_metadata %>%
 
 ## DNA fractions
 ```{r dna_fractions_stats}
-sequence_fractions <- read_counts %>%
-  pivot_longer(-genome, names_to = "sample", values_to = "value") %>%
+sequence_fractions <- molten_table %>%
+  select(Genome, sample, read_count) %>%
+  pivot_longer(read_count, values_to = "value") %>%
   group_by(sample) %>%
   summarise(mags = sum(value)) %>%
 	left_join(sample_metadata, by = join_by(sample == sample)) %>%

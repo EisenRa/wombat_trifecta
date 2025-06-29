@@ -1,7 +1,10 @@
 # Data preparation
+## Raphael Eisenhofer, 2025_06
+
 
 ```{r packs, warning=FALSE, comments="", message=FALSE}
 library(tidyverse)
+library(phyloseq)
 library(ape)
 ```
 
@@ -13,78 +16,101 @@ Load the original data files outputted by the bioinformatic pipeline.
 ### Sample metadata
 
 ```{r load_sample_metadata, warning=FALSE, comments="", message=FALSE}
-sample_metadata <- read_tsv("../data/DMB0173_metadata.tsv.gz") %>%
+sample_metadata <- read_tsv("../data/all_wombats/metadata.tsv") %>%
   dplyr::rename(sample = EHI_plaintext,
                 host_order = order,
                 host_species = species)
 ```
 
-### Read counts
+### Count table. Filter detection in a sample if genome has <50% of bases covered
+### Also normalise by genome size
 
 ```{r load_read_counts, warning=FALSE, comments="", message=FALSE}
-read_counts <- read_tsv("../data/DMB0173_counts.tsv.gz") %>%
-  rename(genome=1) %>%
-  select(c("genome", sample_metadata$sample))
-genomes <- read_counts$genome
-```
+#import, transform, normalize, and filter count table
+molten_table <- read_delim("../data/all_wombats/unfiltered_count_table.txt", delim = '\t') %>%
+  pivot_longer(!Genome,
+               names_to = c("sample", ".value"),
+               names_sep = " ") %>%
+  rename("read_count" = "Read") %>%
+  rename("covered_fraction" = "Covered") %>%
+  rename("MAG_length" = "Length")
 
-### Genome coverage
+genome_counts_filt <- molten_table %>%
+  mutate(read_count = if_else(covered_fraction < 0.5, 0, read_count)) %>%
+  mutate(read_count = read_count*200/MAG_length) %>%
+  select(Genome, sample, read_count) %>%
+  pivot_wider(names_from = sample, values_from = read_count)
 
-```{r load_genome_hits, warning=FALSE, comments="", message=FALSE}
-genome_coverage <- read_tsv("../data/DMB0173_coverage.tsv.gz") %>%
-  rename(genome=1) %>%
-  select(c("genome", sample_metadata$sample))%>%
-  arrange(match(genome, genomes))
 ```
 
 ### Genome metadata
 
 ```{r load_genome_metadata, warning=FALSE, comments="", message=FALSE}
-mag_extra <- read_delim("../data/mag_extra_metadata.csv.gz") %>%
-  mutate(mag_name = str_replace(mag_name, ".fa", ""))
 
-genome_metadata <- read_tsv("../data/DMB0173_mag_info.tsv.gz")%>%
-  rename(length = mag_size) %>%
-  mutate(phylum = str_remove_all(phylum, "p__")) %>%
-  inner_join(., mag_extra, by = join_by(genome == mag_name)) %>%
-  arrange(match(genome, genomes))
+gtdb <- read_delim("../data/all_wombats/gtdbtk_combined_summary.tsv") %>%
+  select(user_genome, classification) %>%
+  rename(genome = user_genome)
+
+mag_stats <- read_delim("../data/all_wombats/drep_data_tables/genomeInformation.csv") 
+
+winning_mags <- read_delim("../data/all_wombats/drep_data_tables/Widb.csv") %>%
+  mutate(genome = str_replace(genome, ".fa.gz", ""))
+dereped_mags <- winning_mags$genome
+
+nhnw_mags <- read_delim("../data/all_wombats/drep_data_tables/Widb.csv") %>%
+  select(genome) %>%
+  left_join(., mag_stats, by = join_by(genome)) %>%
+  select(genome, completeness, contamination, length) %>%
+  rename(mag_size = length) %>%
+  filter(str_detect(genome, "nhnw")) %>%
+  mutate(genome = str_replace_all(genome, ".gz", "")) %>%
+  left_join(., gtdb, by = join_by(genome)) %>%
+  mutate(classification = str_replace_all(classification, ".__", ""),
+         genome = str_replace_all(genome, ".fa", "")) %>%
+  # Split the classification string into columns for each taxonnomic rank
+  separate(col = classification, sep = ";", into = c("domain", "phylum", "class", "order", "family", "genus", "species"))
+
+dmb0178 <- read_delim("../data/all_wombats/DMB0178_mag_info.tsv")
+dmb0179 <- read_delim("../data/all_wombats/DMB0179_mag_info.tsv")
+
+genome_metadata <- dmb0178 %>%
+  rbind(dmb0179) %>%
+  rbind(nhnw_mags) %>%
+  filter(genome %in% dereped_mags) %>%
+  rename(length = mag_size)
+#  arrange(match(genome, genomes))
 ```
 
 ### Genome tree
 
 ```{r load_genome_tree, warning=FALSE, comments="", message=FALSE}
-genome_tree <- read_tree("../data/DMB0173.tree.gz")
-genome_tree$tip.label <- str_replace_all(genome_tree$tip.label, "'", "") #remove single quotes in MAG names
-genome_tree <- keep.tip(genome_tree, tip = genome_metadata$genome) # keep only MAG tips
-```
+#Load and bind trees
+archaea_tree <- ape::read.tree("data/all_wombats/gtdbtk.ar53.classify.tree")
+bacteria_tree <- ape::read.tree("data/all_wombats/gtdbtk.bac120.classify.tree")
+prokaryote_tree <- bind.tree(archaea_tree, bacteria_tree)
 
+#Prune tree
+genomes <- genome_counts_filt$Genome
+genomes <- str_replace_all(genomes, "$", ".fa")
+output_tree <- ape::keep.tip(prokaryote_tree, genomes)
+
+#Quality-check
+if(length(genomes) == length(output_tree$tip.label)){
+	ape::write.tree(output_tree, "../data/all_wombats/gtdb_combined_tree.tree")
+}else{
+	stop("Mag info and tree tips do not match")
+}
+
+genome_tree <- ape::read.tree("../data/all_wombats/gtdb_combined_tree.tree")
+genome_tree$tip.label <- str_replace_all(genome_tree$tip.label, "'", "") %>%
+  str_replace_all(".fa", "")
+genome_tree <- keep.tip(genome_tree, tip = genome_metadata$genome) # keep only MAG tips
+
+```
 
 ## Create working objects
 
 Transform the original data files into working objects for downstream analyses.
-
-### Filter reads by evenness of coverage (0.5 = 50% of the genome is covered by reads)
-
-```{r filter_coverage, warning=FALSE, comments="", message=FALSE}
-min_coverage=0.5
-read_counts_filt <- genome_coverage %>%
-  mutate(across(where(is.numeric), ~ ifelse(. > min_coverage, 1, 0))) %>%
-  mutate(across(-1, ~ . * read_counts[[cur_column()]])) 
-```
-
-### Transform reads into genome counts
-
-```{r calculate_genome_counts_unfiltered, warning=FALSE, comments="", message=FALSE}
-readlength=150
-genome_counts <- read_counts_filt %>% #u
-  mutate(across(where(is.numeric), ~ . / (genome_metadata$length / readlength) ))
-```
-
-```{r calculate_genome_counts_filtered, warning=FALSE, comments="", message=FALSE}
-readlength=150
-genome_counts_filt <- read_counts_filt %>%
-  mutate(across(where(is.numeric), ~ . / (genome_metadata$length / readlength) ))
-```
 
 ### Distill annotations into GIFTs 
 
@@ -117,15 +143,17 @@ phylo_samples <- sample_metadata %>%
   column_to_rownames("sample") %>% 
   sample_data() #convert to phyloseq sample_data object
 phylo_genome <- genome_counts_filt %>% 
-  column_to_rownames("genome") %>% 
+  column_to_rownames("Genome") %>% 
   otu_table(., taxa_are_rows = TRUE)
 phylo_taxonomy <- genome_metadata %>%
   column_to_rownames("genome") %>% 
   as.matrix() %>% 
   tax_table() #convert to phyloseq tax_table object
+phylo_tree <- genome_tree %>%
+  read_tree()
 
-physeq_genome <- phyloseq(phylo_genome, phylo_taxonomy, phylo_samples)
-physeq_genome_clr <- microbiome::transform(physeq_genome, 'clr')
+physeq <- phyloseq(phylo_genome, phylo_taxonomy, phylo_samples, phylo_tree)
+physeq_clr <- microbiome::transform(physeq_genome, 'clr')
 
 ```
 
@@ -134,31 +162,10 @@ physeq_genome_clr <- microbiome::transform(physeq_genome, 'clr')
 ```{r set_colours, warning=FALSE, comments="", message=FALSE}
 
 species_colours <- c(
-  "Podarcis pityusensis" = "#bef7ff", 
-  "Podarcis gaigeae" = "#a6e2ff", 
-  "Podarcis milensis" = "#8eccff", 
-  "Podarcis filfolensis" = "#75b7ff", 
-  "Podarcis liolepis" = "#5da1ff", 
-  "Podarcis muralis" = "#458cff",
-  "Iberolacerta bonnali" = "#c080ff",
-  "Iberolacerta aranica" = "#8000ff",
-  "Lacerta viridis" = "#804280",
-  "Chalcides striatus" = "#80d9ff",
-  "Timon lepidus" = "#797980",
-  "Psammodromus algirus" = "#a1a1aa",
-  "Rattus rattus" = "#ff0000",
-  "Rattus lutreolus" = "#ff5555",
-  "Myodes glareolus" = "#aa6c00",
-  "Myodes rufocanus" = "#ffa200",
-  "Apodemus sylvaticus" = "#5eff00",
-  "Apodemus flavicollis" = "#4ed500",
-  "Peromyscus maniculatus" = "#ffa7a7",
-  "Muscardinus avellanarius" = "#ff416d",
-  "Sciurus vulgaris" = "#00ff91"
+  "Lasiorhinus latifrons" = "#8000ff",
+  "Lasiorhinus kreffttii" = "#ffa200",
+  "Vombatus ursinus" = "#ff416d"
 )
-
-
-
 
 ```
 
@@ -169,14 +176,15 @@ All working objects are wrapped into a single Rdata object to facilitate downstr
 ```{r wrap_working_objects, warning=FALSE, comments="", message=FALSE}
 save(sample_metadata, 
      genome_metadata, 
-     read_counts, 
-     genome_counts, 
+#     read_counts, 
+#     genome_counts, 
+     molten_table,
      genome_counts_filt, 
      genome_tree,
-     genome_gifts, 
+#     genome_gifts, 
      phylum_colors,
-     physeq_genome,
-     physeq_genome_clr,
+     physeq,
+     physeq_clr,
      species_colours,
-     file = "../data/data.Rdata")
+     file = "../data/all_wombats/data.Rdata")
 ```

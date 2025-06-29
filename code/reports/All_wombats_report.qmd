@@ -37,7 +37,7 @@ library(ggforce)
 library(ggdist)
 library(patchwork)
 
-ppr <- read_csv("../data/all_wombats/shnw_bnw_sample_info.csv") %>%
+ppr <- read_csv("../../data/all_wombats/shnw_bnw_sample_info.csv") %>%
   select(EHI_number, metagenomic_bases, host_percent, project) %>%
   rename(sample = EHI_number, 
          host_percentage = host_percent,
@@ -50,7 +50,7 @@ ppr <- read_csv("../data/all_wombats/shnw_bnw_sample_info.csv") %>%
                                     "BNW"),
          host_percentage = str_replace(host_percentage, "%", ""),
          host_percentage = as.numeric(host_percentage) / 100)
-ppr_nhnw <- read_delim("../data/NHNW/preprocessing_report.tsv") %>%
+ppr_nhnw <- read_delim("../../data/NHNW/preprocessing_report.tsv") %>%
   select(sample, metagenomic_bases, host_percentage) %>%
   mutate(host_species = "NHNW")
 
@@ -87,7 +87,7 @@ Here's a summary of the coassembly and binning of all samples together by host s
 ```{r}
 #| warning: false
 
-coasb <- read_delim("../data/all_wombats/AB_assembly_binning.csv") %>%
+coasb <- read_delim("../../data/all_wombats/AB_assembly_binning.csv") %>%
   select(EHI_number, num_bins, assembly_mapping_percent, Host) %>%
   rename(host_species = Host, sample = EHI_number) %>%
   mutate(host_species = str_replace(host_species, 
@@ -96,7 +96,7 @@ coasb <- read_delim("../data/all_wombats/AB_assembly_binning.csv") %>%
          host_species = str_replace(host_species, 
                                     "Vombatus ursinus", 
                                     "BNW"))
-coasb_nhnw <- read_delim("../data/NHNW/nhnw_coassembly_summary.tsv") %>%
+coasb_nhnw <- read_delim("../../data/NHNW/nhnw_coassembly_summary.tsv") %>%
   select(sample, num_bins, assembly_mapping_percent) %>%
   mutate(host_species = "NHNW")
 
@@ -133,7 +133,7 @@ Here are some stats for the quality of the final MAGs.
 ```{r}
 #| warning: false
 
-shnw_bnw_mags <- read_delim("../data/all_wombats/mag_info.csv") %>%
+shnw_bnw_mags <- read_delim("../../data/all_wombats/mag_info.csv") %>%
   select(mag_name, completeness, contamination, GC, size, host_species) %>%
   mutate(host_species = str_replace(host_species, 
                                     "Lasiorhinus latifrons", 
@@ -144,7 +144,7 @@ shnw_bnw_mags <- read_delim("../data/all_wombats/mag_info.csv") %>%
          GC = str_replace(GC, "%", ""),
          GC = as.numeric(GC) / 100) 
 
-nhnw_mags <- read_delim("../data/NHNW/nhnw_metawrap_70_10_bins.stats") %>%
+nhnw_mags <- read_delim("../../data/NHNW/nhnw_metawrap_70_10_bins.stats") %>%
   select(bin, completeness, contamination, GC, size) %>%
   rename(mag_name = bin) %>%
   mutate(host_species = "NHNW")
@@ -264,7 +264,7 @@ Using \`SingleM microbial_fraction\`, we can estimate how much prokaryotic DNA i
 ```{r}
 #| warning: false
 
-shnw_bnw_smf <- read_csv("../data/all_wombats/shnw_bnw_sample_info.csv") %>%
+shnw_bnw_smf <- read_csv("../../data/all_wombats/shnw_bnw_sample_info.csv") %>%
   select(EHI_number, singlem_fraction, project) %>%
   rename(host_species = project, sample = EHI_number) %>%
   mutate(host_species = str_replace(host_species, 
@@ -274,7 +274,7 @@ shnw_bnw_smf <- read_csv("../data/all_wombats/shnw_bnw_sample_info.csv") %>%
                                     "Vombatus ursinus", 
                                     "BNW"))
 
-shnw_bnw_mapping <- read_delim("../data/all_wombats/mag_mapping_rate.txt") %>%
+shnw_bnw_mapping <- read_delim("../../data/all_wombats/mag_mapping_rate.txt") %>%
   pivot_longer(., !Genome) %>%
   filter(Genome == "unmapped") %>% 
   mutate(name = str_replace_all(name, " Relative Abundance \\(%\\)", ""),
@@ -283,12 +283,12 @@ shnw_bnw_mapping <- read_delim("../data/all_wombats/mag_mapping_rate.txt") %>%
   mutate(DAMR = mapped / as.numeric(singlem_fraction))
 
 
-smf_nhnw <- read_delim("../data/NHNW/smf_nhnw.tsv") %>%
+smf_nhnw <- read_delim("../../data/NHNW/smf_nhnw.tsv") %>%
   mutate(sample = str_replace_all(sample, "_M_1", "")) %>%
   rename(singlem_fraction = read_fraction) %>%
   mutate(singlem_fraction = as.numeric(singlem_fraction))
 
-mag_mapping_nhnw <- read_delim("../data/NHNW/mag_mapping_rate.txt") %>%
+mag_mapping_nhnw <- read_delim("../../data/NHNW/mag_mapping_rate.txt") %>%
   pivot_longer(., !Genome) %>%
   filter(Genome == "unmapped") %>%
     mutate(name = str_replace_all(name, " Relative Abundance \\(%\\)", ""),
