@@ -11,13 +11,14 @@ library(ape)
 library(tinytable)
 ```
 
-## Sequencing reads statistics
+## Sequencing reads statistics (Gbp)
 
 ```{r reads_stats}
 sample_metadata %>% 
     summarise(Total=sum(reads_post_fastp * 150 / 1000000000) %>% round(2), 
               mean=mean(reads_post_fastp * 150 / 1000000000) %>% round(2),
-              sd=sd(reads_post_fastp * 150 / 1000000000) %>% round(2)) %>%
+              sd=sd(reads_post_fastp * 150 / 1000000000) %>% round(2),
+              .by = host_species) %>%
     unite("Average",mean, sd, sep = " ± ", remove = TRUE) %>%
     tt()
 ```

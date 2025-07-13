@@ -16,7 +16,7 @@ Load the original data files outputted by the bioinformatic pipeline.
 ### Sample metadata
 
 ```{r load_sample_metadata, warning=FALSE, comments="", message=FALSE}
-sample_metadata <- read_tsv("../data/all_wombats/metadata.tsv") %>%
+sample_metadata <- read_tsv("data/all_wombats/metadata.tsv") %>%
   dplyr::rename(sample = EHI_plaintext,
                 host_order = order,
                 host_species = species)
@@ -27,7 +27,7 @@ sample_metadata <- read_tsv("../data/all_wombats/metadata.tsv") %>%
 
 ```{r load_read_counts, warning=FALSE, comments="", message=FALSE}
 #import, transform, normalize, and filter count table
-molten_table <- read_delim("../data/all_wombats/unfiltered_count_table.txt", delim = '\t') %>%
+molten_table <- read_delim("data/all_wombats/unfiltered_count_table.txt", delim = '\t') %>%
   pivot_longer(!Genome,
                names_to = c("sample", ".value"),
                names_sep = " ") %>%
@@ -47,17 +47,17 @@ genome_counts_filt <- molten_table %>%
 
 ```{r load_genome_metadata, warning=FALSE, comments="", message=FALSE}
 
-gtdb <- read_delim("../data/all_wombats/gtdbtk_combined_summary.tsv") %>%
+gtdb <- read_delim("data/all_wombats/gtdbtk_combined_summary.tsv") %>%
   select(user_genome, classification) %>%
   rename(genome = user_genome)
 
-mag_stats <- read_delim("../data/all_wombats/drep_data_tables/genomeInformation.csv") 
+mag_stats <- read_delim("data/all_wombats/drep_data_tables/genomeInformation.csv") 
 
-winning_mags <- read_delim("../data/all_wombats/drep_data_tables/Widb.csv") %>%
+winning_mags <- read_delim("data/all_wombats/drep_data_tables/Widb.csv") %>%
   mutate(genome = str_replace(genome, ".fa.gz", ""))
 dereped_mags <- winning_mags$genome
 
-nhnw_mags <- read_delim("../data/all_wombats/drep_data_tables/Widb.csv") %>%
+nhnw_mags <- read_delim("data/all_wombats/drep_data_tables/Widb.csv") %>%
   select(genome) %>%
   left_join(., mag_stats, by = join_by(genome)) %>%
   select(genome, completeness, contamination, length) %>%
@@ -66,15 +66,21 @@ nhnw_mags <- read_delim("../data/all_wombats/drep_data_tables/Widb.csv") %>%
   mutate(genome = str_replace_all(genome, ".gz", "")) %>%
   left_join(., gtdb, by = join_by(genome)) %>%
   mutate(classification = str_replace_all(classification, ".__", ""),
-         genome = str_replace_all(genome, ".fa", "")) %>%
+         genome = str_replace_all(genome, ".fa", ""),
+         host_species = "Lasiorhinus krefftii") %>%
   # Split the classification string into columns for each taxonnomic rank
   separate(col = classification, sep = ";", into = c("domain", "phylum", "class", "order", "family", "genus", "species"))
 
-dmb0178 <- read_delim("../data/all_wombats/DMB0178_mag_info.tsv")
-dmb0179 <- read_delim("../data/all_wombats/DMB0179_mag_info.tsv")
+# dmb0178 <- read_delim("data/all_wombats/DMB0178_mag_info.tsv")
+# dmb0179 <- read_delim("data/all_wombats/DMB0179_mag_info.tsv")
+ehi_mags <- read_delim("data/all_wombats/ehi_mag_info.csv") %>%
+  select(mag_name, domain, phylum, class, order, family, genus, species,
+         completeness, contamination, size, host_species) %>%
+  mutate(mag_name = str_replace(mag_name, ".fa", "")) %>%
+  rename(genome = mag_name, mag_size = size) %>%
+  mutate(across(all_of(2:8), ~str_remove(., ".__")))
 
-genome_metadata <- dmb0178 %>%
-  rbind(dmb0179) %>%
+genome_metadata <- ehi_mags %>%
   rbind(nhnw_mags) %>%
   filter(genome %in% dereped_mags) %>%
   rename(length = mag_size)
@@ -96,12 +102,12 @@ output_tree <- ape::keep.tip(prokaryote_tree, genomes)
 
 #Quality-check
 if(length(genomes) == length(output_tree$tip.label)){
-	ape::write.tree(output_tree, "../data/all_wombats/gtdb_combined_tree.tree")
+	ape::write.tree(output_tree, "data/all_wombats/gtdb_combined_tree.tree")
 }else{
 	stop("Mag info and tree tips do not match")
 }
 
-genome_tree <- ape::read.tree("../data/all_wombats/gtdb_combined_tree.tree")
+genome_tree <- ape::read.tree("data/all_wombats/gtdb_combined_tree.tree")
 genome_tree$tip.label <- str_replace_all(genome_tree$tip.label, "'", "") %>%
   str_replace_all(".fa", "")
 genome_tree <- keep.tip(genome_tree, tip = genome_metadata$genome) # keep only MAG tips
@@ -115,10 +121,10 @@ Transform the original data files into working objects for downstream analyses.
 ### Distill annotations into GIFTs 
 
 ```{r distill_annotations, warning=FALSE, comments="", message=FALSE}
-load("../data/genome_gifts_raw.Rdata")
-genome_counts_filt <- genome_counts_filt[genome_counts_filt$genome %in% rownames(genome_gifts_raw),] 
+load("data/genome_gifts_raw.Rdata")
+genome_counts_filt <- genome_counts_filt[genome_counts_filt$Genome %in% rownames(genome_gifts_raw),] 
 rownames(genome_counts_filt) <- NULL
-genome_gifts <- genome_gifts_raw[rownames(genome_gifts_raw) %in% genome_counts_filt$genome,] 
+genome_gifts <- genome_gifts_raw[rownames(genome_gifts_raw) %in% genome_counts_filt$Genome,] 
 ```
 
 ## Prepare color scheme
@@ -153,7 +159,7 @@ phylo_tree <- genome_tree %>%
   read_tree()
 
 physeq <- phyloseq(phylo_genome, phylo_taxonomy, phylo_samples, phylo_tree)
-physeq_clr <- microbiome::transform(physeq_genome, 'clr')
+physeq_clr <- microbiome::transform(physeq, 'clr')
 
 ```
 
@@ -181,10 +187,10 @@ save(sample_metadata,
      molten_table,
      genome_counts_filt, 
      genome_tree,
-#     genome_gifts, 
+     genome_gifts,
      phylum_colors,
      physeq,
      physeq_clr,
      species_colours,
-     file = "../data/all_wombats/data.Rdata")
+     file = "data/all_wombats/data.Rdata")
 ```

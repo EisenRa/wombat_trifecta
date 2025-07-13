@@ -2,7 +2,7 @@
 
 ```{r load_data_alpha, comment="", message=FALSE, warning=FALSE}
 load("../data/data.Rdata")
-load("../data/alpha.Rdata")
+# load("../data/alpha.Rdata")
 ```
 
 ## Summary table
