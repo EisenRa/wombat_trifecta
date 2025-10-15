@@ -27,6 +27,10 @@ This report details the quality of the metagenomic data (from faecal samples) fo
 
 Here are the results for the preprocessing of the data, namely, fastp to trim/quality filter the paired reads and the mapping of filtered reads to the bare-nosed wombat genomes. (*There are currently no hairy-nosed wombat nuclear genomes as of 22/01/2025*).
 
+```{r, setup, include=FALSE}
+knitr::opts_knit$set(root.dir = '../../')
+```
+
 ```{r}
 #| warning: false
 #| 

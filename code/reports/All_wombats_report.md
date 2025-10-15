@@ -28,37 +28,32 @@ library(ggforce)
 library(ggdist)
 library(patchwork)
 
-ppr <- read_csv("../data/all_wombats/shnw_bnw_sample_info.csv") %>%
-  select(EHI_number, metagenomic_bases, host_percent, project) %>%
-  rename(sample = EHI_number, 
-         host_percentage = host_percent,
-         host_species = project) %>%
-  mutate(host_species = str_replace(host_species, 
-                                    "Lasiorhinus latifrons", 
-                                    "SHNW"),
-         host_species = str_replace(host_species, 
-                                    "Vombatus ursinus", 
-                                    "BNW"),
-         host_percentage = str_replace(host_percentage, "%", ""),
-         host_percentage = as.numeric(host_percentage) / 100)
-ppr_nhnw <- read_delim("../data/NHNW/preprocessing_report.tsv") %>%
-  select(sample, metagenomic_bases, host_percentage) %>%
-  mutate(host_species = "NHNW")
+ppr <- read_delim("data/all_wombats/metadata.tsv") %>%
+  select(EHI_plaintext, metagenomic_bases, species,
+         host_bases, singlem_fraction,
+         average_bacterial_archaeal_genome_size) %>%
+  rename(sample = EHI_plaintext,
+         average_genome_size = average_bacterial_archaeal_genome_size) %>%
+  mutate(
+    host_species = case_when(species == "Lasiorhinus latifrons" ~ "SHNW",
+                             species == "Vombatus ursinus" ~ "BNW",
+                             species == "Lasiorhinus kreffttii" ~ "NHNW"
+                             ),
+         host_percentage = host_bases / metagenomic_bases
+         ) 
 
-ppr_merged <- ppr %>%
-  bind_rows(., ppr_nhnw)
 
-mean_gbp <- mean(ppr_merged$metagenomic_bases) / 1e9
-mean_host <- mean(ppr_merged$host_percentage)
-max_host <- max(ppr_merged$host_percentage)
+mean_gbp <- mean(ppr$metagenomic_bases) / 1e9
+mean_host <- mean(ppr$host_percentage)
+max_host <- max(ppr$host_percentage)
 
-ppr_merged %>%
+ppr %>%
   ggplot(aes(y = metagenomic_bases / 1000000000, 
              x = sample,
              fill = host_species)) +
   facet_grid(~host_species, scales = "free", space = "free") +
   geom_histogram(stat = "identity") +
-  geom_hline(yintercept = mean(ppr_merged$metagenomic_bases) / 1e9) +
+  geom_hline(yintercept = mean(ppr$metagenomic_bases) / 1e9) +
   theme_classic() + 
   theme(
     axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5),
@@ -69,9 +64,9 @@ ppr_merged %>%
 
 ![](All_wombats_report_files/figure-commonmark/unnamed-chunk-1-1.png)
 
-Horizontal line indicates the mean 6.7 Gbp of data for the samples.
-There was minimal mapping of reads to the host genome: max = 23% mean =
-1.04%.
+Horizontal line indicates the mean 6.6 Gbp of data for the samples.
+There was minimal mapping of reads to the host genome: max = 32% mean =
+1.78%.
 
 ### Coassembly report
 
@@ -79,7 +74,7 @@ Here’s a summary of the coassembly and binning of all samples together
 by host species.
 
 ``` r
-coasb <- read_delim("../data/all_wombats/AB_assembly_binning.csv") %>%
+coasb <- read_delim("data/all_wombats/AB_assembly_binning.csv") %>%
   select(EHI_number, num_bins, assembly_mapping_percent, Host) %>%
   rename(host_species = Host, sample = EHI_number) %>%
   mutate(host_species = str_replace(host_species, 
@@ -88,7 +83,8 @@ coasb <- read_delim("../data/all_wombats/AB_assembly_binning.csv") %>%
          host_species = str_replace(host_species, 
                                     "Vombatus ursinus", 
                                     "BNW"))
-coasb_nhnw <- read_delim("../data/NHNW/nhnw_coassembly_summary.tsv") %>%
+
+coasb_nhnw <- read_delim("data/NHNW/nhnw_coassembly_summary.tsv") %>%
   select(sample, num_bins, assembly_mapping_percent) %>%
   mutate(host_species = "NHNW")
 
@@ -119,7 +115,7 @@ coasb_merged %>%
 ![](All_wombats_report_files/figure-commonmark/unnamed-chunk-2-1.png)
 
 Overall the coassembly captured most of the metagenomic reads, with a
-mean mapping rate of 90.6% (max = 97.6%; min = 71.0%). Binning of these
+mean mapping rate of 91.0% (max = 97.6%; min = 81.0%). Binning of these
 contigs yielded 600, 301, and 208 metagenome assembled genomes (MAGs)
 for the NHNW, SHNW, and BNW, respectively. Keep in mind that the
 microbial fractions may be different between species (more on this
@@ -130,24 +126,23 @@ later).
 Here are some stats for the quality of the final MAGs.
 
 ``` r
-shnw_bnw_mags <- read_delim("../data/all_wombats/mag_info.csv") %>%
-  select(mag_name, completeness, contamination, GC, size, host_species) %>%
-  mutate(host_species = str_replace(host_species, 
-                                    "Lasiorhinus latifrons", 
-                                    "SHNW"),
-         host_species = str_replace(host_species, 
-                                    "Vombatus ursinus", 
-                                    "BNW"),
-         GC = str_replace(GC, "%", ""),
-         GC = as.numeric(GC) / 100) 
+shnw_mags <- read_delim("data/all_wombats/DMB0178_mag_info.tsv") %>%
+  select(genome, completeness, contamination, mag_size) %>%
+  mutate(host_species = "SHNW") 
 
-nhnw_mags <- read_delim("../data/NHNW/nhnw_metawrap_70_10_bins.stats") %>%
-  select(bin, completeness, contamination, GC, size) %>%
-  rename(mag_name = bin) %>%
+bnw_mags <- read_delim("data/all_wombats/DMB0179_mag_info.tsv") %>%
+  select(genome, completeness, contamination, mag_size) %>%
+  mutate(host_species = "BNW")
+
+
+nhnw_mags <- read_delim("data/NHNW/nhnw_metawrap_70_10_bins.stats") %>%
+  select(bin, completeness, contamination, size) %>%
+  rename(genome = bin, mag_size = size) %>%
   mutate(host_species = "NHNW")
 
-mags <- shnw_bnw_mags %>%
+mags <- shnw_mags %>%
   bind_rows(., nhnw_mags) %>%
+  bind_rows(., bnw_mags) %>%
   filter(completeness >= 70)
 
 comp <- mags %>% 
@@ -229,11 +224,12 @@ comp / cont
 
 ![](All_wombats_report_files/figure-commonmark/unnamed-chunk-3-1.png)
 
-Most MAGs are of decent quality.
+Most MAGs are of decent quality. Note that this is before dereplication
+of all MAGs (host species) together.
 
 ``` r
 mags %>%
-  ggplot(aes(x = host_species, y = size / 1000000)) +
+  ggplot(aes(x = host_species, y = mag_size / 1000000)) +
   geom_jitter(width = 0.1, height = 0, alpha = 0.5) +
   stat_halfeye(
     adjust = .5,
@@ -255,8 +251,8 @@ mags %>%
 ![](All_wombats_report_files/figure-commonmark/unnamed-chunk-4-1.png)
 
 The mean MAG size is ~2 Mbp. This is pretty low, but cool, as it
-suggests that most of these bacteria probably can’t live outside the
-NHNW gut!
+suggests that many of these bacteria probably can’t live outside the
+wombat gut!
 
 ### How well did we capture the metagenomic samples?
 
@@ -269,42 +265,17 @@ describing the method:
 <https://www.biorxiv.org/content/10.1101/2024.05.16.594470v1>
 
 ``` r
-shnw_bnw_smf <- read_csv("../data/all_wombats/shnw_bnw_sample_info.csv") %>%
-  select(EHI_number, singlem_fraction, project) %>%
-  rename(host_species = project, sample = EHI_number) %>%
-  mutate(host_species = str_replace(host_species, 
-                                    "Lasiorhinus latifrons", 
-                                    "SHNW"),
-         host_species = str_replace(host_species, 
-                                    "Vombatus ursinus", 
-                                    "BNW"))
+smf <- ppr %>%
+  select(sample, singlem_fraction, host_species)
 
-shnw_bnw_mapping <- read_delim("../data/all_wombats/mag_mapping_rate.txt") %>%
+damr <- read_delim("data/all_wombats/mapping_rate.txt") %>%
   pivot_longer(., !Genome) %>%
   filter(Genome == "unmapped") %>% 
   mutate(name = str_replace_all(name, " Relative Abundance \\(%\\)", ""),
            mapped = 100 - value) %>% 
-  inner_join(., shnw_bnw_smf, by = join_by(name == sample)) %>% 
+  inner_join(., smf, by = join_by(name == sample)) %>% 
   mutate(DAMR = mapped / as.numeric(singlem_fraction))
 
-
-smf_nhnw <- read_delim("../data/NHNW/smf_nhnw.tsv") %>%
-  mutate(sample = str_replace_all(sample, "_M_1", "")) %>%
-  rename(singlem_fraction = read_fraction) %>%
-  mutate(singlem_fraction = as.numeric(singlem_fraction))
-
-mag_mapping_nhnw <- read_delim("../data/NHNW/mag_mapping_rate.txt") %>%
-  pivot_longer(., !Genome) %>%
-  filter(Genome == "unmapped") %>%
-    mutate(name = str_replace_all(name, " Relative Abundance \\(%\\)", ""),
-           mapped = 100 - value,
-           host_species = "NHNW") %>%
-  inner_join(., smf_nhnw, by = join_by(name == sample)) %>% 
-  mutate(DAMR = mapped / as.numeric(singlem_fraction)) %>%
-  select(Genome, name, value, mapped, singlem_fraction, host_species, DAMR)
-
-damr <- shnw_bnw_mapping %>%
-  bind_rows(., mag_mapping_nhnw)
 
 mean_damr <- percent(mean(damr$DAMR), accuracy = 0.1)
 
@@ -331,6 +302,7 @@ damr %>%
 
 ![](All_wombats_report_files/figure-commonmark/unnamed-chunk-5-1.png)
 
-Overall, we’ve captured most of the prokaryote DNA in the samples (mean
-77.2%). This is pretty decent considering the complexity of these
-microbial communities!
+Overall, we’ve captured a good amount of the prokaryote DNA in the
+samples (mean 77.3%). This is pretty decent considering the complexity
+of these microbial communities! Note that the BNW is on average lower
+~64% compared to the HNWs ~82%.

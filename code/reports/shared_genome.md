@@ -1,32 +1,27 @@
----
-title: "Finding shared genomes"
-author: "Raphael Eisenhofer"
-format:
-  gfm:
-    fig-width: 12
-    fig-height: 7
-    fig-dpi: 300
-  html:
-    fig-width: 12
-    fig-height: 7
-    fig-dpi: 300  
-editor: visual
----
+# Finding shared genomes
+Raphael Eisenhofer
 
 ## Finding shared genomes
 
-Foray into identifying bacterial species/genomes that are shared among the three host species of wombats. *Vombatus ursinus* (bare-nosed wombat; **BNW**) appears to share a common ancestor \~6-8 million years ago (MYA) with *Lasiorhinus latifrons* (southern hairy-nosed wombat; **SHNW**) \[Mitchell et al. 2014; dated mitochondrial tree\]. *Lasiorhinus krefftii* (northern hairy-nosed wombat; **NHNW**) is more closer related to the **SHNW**, but I couldn't find any published data with date estimates \[Colin/Jeremy, do you have an estimate?\], but I'm guessing that it's \< 2 MYA.
+Foray into identifying bacterial species/genomes that are shared among
+the three host species of wombats. *Vombatus ursinus* (bare-nosed
+wombat; **BNW**) appears to share a common ancestor ~6-8 million years
+ago (MYA) with *Lasiorhinus latifrons* (southern hairy-nosed wombat;
+**SHNW**) \[Mitchell et al. 2014; dated mitochondrial tree\].
+*Lasiorhinus krefftii* (northern hairy-nosed wombat; **NHNW**) is more
+closer related to the **SHNW**, but I couldn’t find any published data
+with date estimates \[Colin/Jeremy, do you have an estimate?\], but I’m
+guessing that it’s \< 2 MYA.
 
-Here I'll use data from dRep: the dereplication of bacterial genomes using MASH and ANImf to identify candidate bacterial genomes that show signs (high ANI; average nucleotide identity) of being present at the **TMRCA** (time to most recent common ancestor) for 1) all wombats, and 2) hairy-nosed wombats.
+Here I’ll use data from dRep: the dereplication of bacterial genomes
+using MASH and ANImf to identify candidate bacterial genomes that show
+signs (high ANI; average nucleotide identity) of being present at the
+**TMRCA** (time to most recent common ancestor) for 1) all wombats, and
+2) hairy-nosed wombats.
 
 ## Load packages & data
 
-```{r, setup, include=FALSE}
-knitr::opts_knit$set(root.dir = '../../')
-```
-
-```{r}
-#| warning: false
+``` r
 library(tidyverse)
 library(ggplot2)
 
@@ -158,7 +153,16 @@ n_all_three_comparisons <- nrow(all_three_species) / 3
 
 all_three_species %>% 
   summarise(mean_ani = mean(ani), .by = comparison)
+```
 
+    # A tibble: 3 × 2
+      comparison mean_ani
+      <chr>         <dbl>
+    1 SHNW:BNW      0.943
+    2 NHNW:BNW      0.936
+    3 SHNW:NHNW     0.964
+
+``` r
 #make a plot showing this info (ID for future ref)
 #also look at genome characteristics (e.g. taxonomy, size, gc, etc.)
 
@@ -172,8 +176,11 @@ all_three_species %>%
   theme_minimal() +
   coord_cartesian(ylim = c(85, 100)) +
   labs(x = "MAG cluster", y = "Average Nucleotide Identity (%)")
-  
+```
 
+![](shared_genome_files/figure-commonmark/unnamed-chunk-1-1.png)
+
+``` r
 all_three_species %>%
   ggplot(aes(
     x = as.character(primary_cluster), 
@@ -184,19 +191,30 @@ all_three_species %>%
   theme_minimal() +
   coord_cartesian(ylim = c(85, 100)) +
   labs(x = "MAG cluster", y = "Average Nucleotide Identity (%)")
-  
-  
-
 ```
+
+![](shared_genome_files/figure-commonmark/unnamed-chunk-1-2.png)
 
 ### Playing around
 
-```{r}
-
+``` r
 library(tidyverse)
 library(ggdendro)
 library(scales)
+```
 
+
+    Attaching package: 'scales'
+
+    The following object is masked from 'package:purrr':
+
+        discard
+
+    The following object is masked from 'package:readr':
+
+        col_factor
+
+``` r
 plot_MASH_dendrogram <- function(Mdb, Cdb, threshold = FALSE, plot_dir = NULL) {
   # Set ggplot theme
   theme_set(theme_minimal() +
